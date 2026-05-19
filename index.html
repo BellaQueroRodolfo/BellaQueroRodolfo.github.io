@@ -4,31 +4,102 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RBQ Studio">
+<meta name="theme-color" content="#070D18">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" id="pwaManifest">
 <title>RBQ Studio</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer onload="onGISLoaded()"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 :root{
+  /* Surfaces */
   --bg:#070D18;--panel:#0C1422;--card:#111B2C;--hover:#172030;--border:#1B2E48;
+  /* Text */
   --text:#EDF0FF;--sec:#6B7A9A;--dim:#2A3A56;--muted:#4A5A78;
-  --green:#2ECC71;--red:#E05555;--yellow:#F0C040;--accent:#5B9EC9;
+  /* Semantic colors */
+  --blue:#5B9EC9;   /* primary actions */
+  --green:#2ECC71;  /* success / export / saved */
+  --red:#E05555;    /* destructive / delete / error */
+  --yellow:#F0C040; /* caution / unsaved / warning */
+  --purple:#9B7EC8; /* AI / smart features */
+  --teal:#3D9E8C;   /* navigation / active state */
+  --orange:#D28041; /* energy / warm accent */
+  --accent:#5B9EC9;
+  /* Slide canvas */
   --slide-bg:#152D47;--slide-div:#1F3D5A;--slide-sec:#E8ECF5;--slide-dim:#8899BB;
+  /* Touch targets */
+  --tap-min:44px;
+  /* Radius */
+  --r-sm:6px;--r-md:9px;--r-lg:14px;
+  /* Transitions */
+  --t-fast:.12s;--t-base:.18s;--t-slow:.28s;
 }
 body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column}
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 
-/* SHARED */
-.btn{padding:7px 13px;border-radius:8px;font-family:'Poppins',sans-serif;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
-.btn-ghost{background:transparent;color:var(--sec);border:1px solid var(--border)}.btn-ghost:hover{background:var(--hover);color:var(--text)}
-.btn-accent{background:var(--accent);color:#fff}.btn-accent:hover{opacity:.85}
-.btn-green{background:linear-gradient(135deg,#1A7A45,#22A85E);color:#fff;font-weight:600}
-.btn-sm{padding:5px 9px;font-size:11px}
+/* ── SHARED COMPONENTS ── */
+.btn{padding:7px 13px;border-radius:var(--r-md);font-family:'Poppins',sans-serif;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all var(--t-fast);display:inline-flex;align-items:center;gap:5px;white-space:nowrap;min-height:32px;position:relative;overflow:hidden}
+.btn:active{transform:scale(.96);transition:transform .08s}
+.btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.08);opacity:0;transition:opacity var(--t-fast)}
+.btn:active::after{opacity:1}
+
+/* Ghost — navigation / secondary */
+.btn-ghost{background:transparent;color:var(--sec);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--hover);color:var(--text);border-color:var(--muted)}
+
+/* Blue — primary action */
+.btn-accent{background:var(--blue);color:#fff;box-shadow:0 2px 8px rgba(91,158,201,.25)}
+.btn-accent:hover{background:#6AAED9;box-shadow:0 4px 14px rgba(91,158,201,.4)}
+
+/* Green — export / success / save */
+.btn-green{background:linear-gradient(135deg,#1A7A45,#22A85E);color:#fff;font-weight:600;box-shadow:0 2px 8px rgba(34,168,94,.25)}
+.btn-green:hover{box-shadow:0 4px 16px rgba(34,168,94,.4)}
+
+/* Red — destructive / delete */
+.btn-red{background:rgba(224,85,85,.15);color:var(--red);border:1px solid rgba(224,85,85,.3)}
+.btn-red:hover{background:var(--red);color:#fff;border-color:var(--red)}
+
+/* Purple — AI / smart features */
+.btn-purple{background:rgba(155,126,200,.15);color:var(--purple);border:1px solid rgba(155,126,200,.3)}
+.btn-purple:hover{background:var(--purple);color:#fff;border-color:var(--purple)}
+
+/* Yellow — caution */
+.btn-yellow{background:rgba(240,192,64,.12);color:var(--yellow);border:1px solid rgba(240,192,64,.3)}
+.btn-yellow:hover{background:var(--yellow);color:#111;border-color:var(--yellow)}
+
+.btn-sm{padding:5px 9px;font-size:11px;min-height:28px}
+.btn-lg{padding:11px 20px;font-size:13px;min-height:var(--tap-min)}
+
+/* Labels */
 .lbl{font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--dim);text-transform:uppercase;margin-bottom:7px}
-.sw{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2.5px solid transparent;transition:all .15s;flex-shrink:0}
+.lsec-title{font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--sec);text-transform:uppercase;margin-bottom:8px;border-left:2px solid var(--accent);padding-left:6px}
+
+/* Swatches */
+.sw{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2.5px solid transparent;transition:all var(--t-fast);flex-shrink:0}
 .sw.on{border-color:var(--text);transform:scale(1.2)}
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(40px);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:9px 18px;font-size:12px;color:var(--text);z-index:9999;transition:transform .3s;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.5);pointer-events:none}
-.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:80px;left:50%;
+  transform:translateX(-50%) translateY(50px);
+  background:var(--card);border:1px solid var(--border);
+  border-radius:10px;padding:10px 18px 10px 14px;
+  font-size:12px;font-weight:500;color:var(--text);
+  z-index:9999;transition:transform var(--t-slow),opacity var(--t-slow);
+  white-space:nowrap;box-shadow:0 8px 28px rgba(0,0,0,.6);
+  pointer-events:none;display:flex;align-items:center;gap:8px;
+  opacity:0;
+}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast-icon{font-size:14px;flex-shrink:0}
+.toast.t-success{border-color:rgba(46,204,113,.4);color:var(--green)}
+.toast.t-error{border-color:rgba(224,85,85,.4);color:var(--red);background:#130a0a}
+.toast.t-warning{border-color:rgba(240,192,64,.4);color:var(--yellow)}
+.toast.t-ai{border-color:rgba(155,126,200,.4);color:var(--purple)}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:800;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
 .modal-overlay.open{opacity:1;pointer-events:all}
 .modal{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;width:min(420px,92vw);max-height:80vh;overflow-y:auto}
@@ -120,26 +191,136 @@ input[type=range]{flex:1;accent-color:var(--accent);cursor:pointer}
 .photo-uploader:hover{border-color:var(--accent);color:var(--accent)}
 .photo-thumb-sm{width:100%;height:56px;object-fit:cover;border-radius:6px;display:block}
 
-/* MOBILE */
+/* ── MOBILE (≤768px) ── */
 @media(max-width:768px){
-  .lpanel{position:fixed;left:0;top:57px;bottom:62px;z-index:400;transform:translateX(-100%);transition:transform .25s;width:260px}
+  /* Panels */
+  .lpanel{position:fixed;left:0;top:56px;bottom:68px;z-index:400;transform:translateX(-100%);transition:transform .25s cubic-bezier(.25,.8,.25,1);width:min(280px,85vw);box-shadow:4px 0 24px rgba(0,0,0,.5)}
   .lpanel.open{transform:translateX(0)}
-  .rpanel{position:fixed;left:0;right:0;bottom:0;height:70vh;z-index:401;transform:translateY(100%);transition:transform .3s cubic-bezier(.25,.8,.25,1);border-radius:16px 16px 0 0;border-top:1px solid var(--border);border-left:none;width:100%;max-width:100%}
+  .rpanel{position:fixed;left:0;right:0;bottom:0;height:78vh;z-index:401;transform:translateY(100%);transition:transform .3s cubic-bezier(.25,.8,.25,1);border-radius:18px 18px 0 0;border-top:1px solid var(--border);border-left:none;width:100%;max-width:100%;box-shadow:0 -8px 32px rgba(0,0,0,.5)}
   .rpanel.open{transform:translateY(0)}
-  .rpanel-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:10px auto 4px;flex-shrink:0}
-  .mob-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:399;display:none}
+  .rpanel-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 2px;flex-shrink:0;cursor:grab}
+  /* Overlay */
+  .mob-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:399;display:none;backdrop-filter:blur(2px)}
   .mob-overlay.show{display:block}
-  .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:62px;background:var(--panel);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;z-index:300;padding-bottom:env(safe-area-inset-bottom)}
-  .bnav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;color:var(--sec);font-size:9.5px;font-weight:500;padding:6px 12px;border-radius:10px;transition:all .15s;border:none;background:none;font-family:'Poppins',sans-serif}
-  .bnav-btn.on{color:var(--accent)}
-  .bnav-icon{font-size:18px;line-height:1}
-  .cpanel{padding-bottom:72px}
-  .toast{bottom:72px}
+  /* Bottom nav — bigger tap targets */
+  .bottom-nav{
+    position:fixed;bottom:0;left:0;right:0;
+    height:68px;background:var(--panel);
+    border-top:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-around;
+    z-index:300;
+    padding-bottom:env(safe-area-inset-bottom);
+    padding-left:env(safe-area-inset-left);
+    padding-right:env(safe-area-inset-right);
+  }
+  .bnav-btn{
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    cursor:pointer;color:var(--sec);font-size:9.5px;font-weight:500;
+    padding:8px 16px;border-radius:12px;
+    transition:all var(--t-fast);border:none;background:none;
+    font-family:'Poppins',sans-serif;min-width:var(--tap-min);min-height:var(--tap-min);
+    justify-content:center;
+  }
+  .bnav-btn.on{color:var(--teal);background:rgba(61,158,140,.08)}
+  .bnav-btn:active{transform:scale(.92)}
+  .bnav-icon{font-size:20px;line-height:1}
+  /* Spacing */
+  .cpanel{padding-bottom:76px}
+  .toast{bottom:76px}
+  /* Hide desktop-only */
   .pc-only{display:none!important}
+  /* Bigger tap targets for all buttons on mobile */
+  .btn{min-height:var(--tap-min);padding:9px 14px}
+  .btn-sm{min-height:36px;padding:7px 11px}
+  .hdr-icon{width:var(--tap-min);height:var(--tap-min);font-size:17px}
+  /* Header compact on mobile */
+  .hdr{padding:8px 12px}
+  .logo{font-size:14px}
+  /* Slide thumbnails - single column on very small screens */
+  .slide-thumb-actions{opacity:1!important}
+  .ta-btn{padding:5px 7px;font-size:11px}
+  /* Props panel bigger inputs */
+  .props-input,.props-ta{font-size:13px;padding:8px 10px}
+  input[type=range]{height:24px}
+  /* Swipe hint */
+  .swipe-hint{display:flex}
 }
+
+/* ── TABLET (769px – 1100px) ── */
+@media(min-width:769px) and (max-width:1100px){
+  .lpanel{width:220px}
+  .rpanel.open{width:340px}
+  .rpanel-inner{min-width:298px}
+  .hdr-icon{width:32px;height:32px}
+  #thumbsGrid{grid-template-columns:repeat(2,auto)!important}
+}
+
+/* ── DESKTOP (>1100px) ── */
+@media(min-width:1101px){
+  .rpanel.open{width:420px}
+}
+
+/* ── HIDE MOBILE-ONLY ON DESKTOP ── */
 @media(min-width:769px){
   .mob-overlay,.bottom-nav,.rpanel-handle,.mob-only{display:none!important}
+  .swipe-hint{display:none!important}
 }
+
+/* ── SWIPE HINT (mobile) ── */
+.swipe-hint{
+  display:none;position:fixed;bottom:76px;left:50%;
+  transform:translateX(-50%);
+  background:rgba(91,158,201,.15);border:1px solid rgba(91,158,201,.25);
+  border-radius:20px;padding:5px 14px;font-size:10.5px;color:var(--accent);
+  z-index:200;pointer-events:none;animation:fadeInOut 2.5s ease forwards;
+}
+@keyframes fadeInOut{0%{opacity:0;transform:translateX(-50%) translateY(8px)}20%{opacity:1;transform:translateX(-50%) translateY(0)}80%{opacity:1}100%{opacity:0}}
+@keyframes thumbIn{0%{opacity:0;transform:scale(.91) translateY(8px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes thumbOut{0%{opacity:1;transform:scale(1) translateY(0)}100%{opacity:0;transform:scale(.88) translateY(-6px)}}
+@keyframes canvasFadeIn{0%{opacity:0;transform:translateY(5px)}100%{opacity:1;transform:translateY(0)}}
+
+/* ── INTERACTIVE FEEDBACK ── */
+.ftab{transition:all var(--t-fast)}
+.ftab:active{transform:scale(.95)}
+.filter-btn:active{transform:scale(.94)}
+.slide-thumb{transition:border-color var(--t-base),box-shadow var(--t-base),transform var(--t-fast)}
+.slide-thumb:active{transform:scale(.97)}
+.ta-btn:active{transform:scale(.9)}
+.parse-btn:active{transform:scale(.97)!important}
+.hdr-icon:active{transform:scale(.9)}
+.sync-badge:active{transform:scale(.95)}
+
+/* ── CANVAS EDITOR MOBILE IMPROVEMENTS ── */
+@media(max-width:768px){
+  .canvas-wrap{padding:10px;gap:8px}
+  .layer-handle{width:14px;height:14px}
+  .layer-handle.tl{top:-7px;left:-7px}
+  .layer-handle.tr{top:-7px;right:-7px}
+  .layer-handle.bl{bottom:-7px;left:-7px}
+  .layer-handle.br{bottom:-7px;right:-7px}
+  .layer-handle.tc{top:-7px}
+  .layer-handle.bc{bottom:-7px}
+  .layer-handle.ml{left:-7px}
+  .layer-handle.mr{right:-7px}
+}
+
+/* ── SLIDE NAV ARROWS (mobile) ── */
+.slide-nav-bar{
+  display:none;position:fixed;bottom:76px;left:0;right:0;
+  justify-content:space-between;align-items:center;
+  padding:0 12px;z-index:250;pointer-events:none;
+}
+@media(max-width:768px){.slide-nav-bar{display:flex}}
+.slide-nav-btn{
+  width:40px;height:40px;border-radius:50%;
+  background:rgba(12,20,34,.85);border:1px solid var(--border);
+  color:var(--sec);font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  pointer-events:all;transition:all var(--t-fast);
+  backdrop-filter:blur(6px);
+}
+.slide-nav-btn:active{transform:scale(.9);background:var(--accent);color:#fff;border-color:var(--accent)}
+.slide-nav-btn:disabled{opacity:.2;pointer-events:none}
 
 /* ── LEFT PANEL TABS ── */
 .lpanel-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
@@ -220,17 +401,94 @@ input[type=range]{flex:1;accent-color:var(--accent);cursor:pointer}
 
 /* ── BG COLOR STRIP (inside canvas) ── */
 .canvas-bg-strip{padding:7px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex-shrink:0;background:var(--panel)}
+
+/* ── DRIVE SYNC ── */
+.sync-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:7px;border:1px solid var(--border);background:var(--card);cursor:pointer;transition:all .15s;font-size:11px;color:var(--sec);white-space:nowrap;flex-shrink:0}
+.sync-badge:hover{background:var(--hover);color:var(--text)}
+.sync-badge.connected{border-color:rgba(46,204,113,.35);color:var(--green)}
+.sync-badge.syncing{border-color:rgba(240,192,64,.35);color:var(--yellow)}
+.sync-badge.unsaved{border-color:rgba(240,192,64,.35);color:var(--yellow)}
+.sync-badge.error{border-color:rgba(224,85,85,.35);color:var(--red)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{display:inline-block;animation:spin .8s linear infinite}
+.project-name-wrap{display:flex;align-items:center;gap:4px;min-width:0}
+.project-name{font-size:11px;font-weight:500;color:var(--sec);cursor:pointer;padding:3px 7px;border-radius:6px;border:1px solid transparent;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:transparent;transition:all .15s}
+.project-name:hover{border-color:var(--border);background:var(--card);color:var(--text)}
+.drive-menu{position:absolute;top:calc(100% + 6px);right:0;background:var(--panel);border:1px solid var(--border);border-radius:11px;padding:10px;z-index:700;min-width:200px;box-shadow:0 8px 28px rgba(0,0,0,.55);display:none}
+.drive-menu.open{display:block}
+.drive-menu-item{padding:8px 10px;border-radius:7px;font-size:11.5px;cursor:pointer;color:var(--sec);transition:all .15s;display:flex;align-items:center;gap:8px}
+.drive-menu-item:hover{background:var(--hover);color:var(--text)}
+.drive-wrap{position:relative;display:inline-flex}
+/* ── SETUP MODAL ── */
+.setup-step{display:flex;gap:10px;margin-bottom:8px;font-size:11.5px;color:var(--text);line-height:1.6}
+.setup-num{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+/* ── PROJECT BROWSER ── */
+.proj-card{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:11px 13px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.proj-card:hover{border-color:var(--accent);background:var(--hover)}
+.proj-card.current{border-color:var(--accent)}
+
+/* ── SLIDE LIBRARY ── */
+.lib-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:6px}
+.lib-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:11px 12px;cursor:pointer;transition:all var(--t-fast);display:flex;flex-direction:column;gap:4px;position:relative;overflow:hidden}
+.lib-card:hover{border-color:var(--accent);background:var(--hover);transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.lib-card:active{transform:scale(.97)}
+.lib-card-icon{font-size:20px;line-height:1;margin-bottom:2px}
+.lib-card-label{font-size:11.5px;font-weight:600;color:var(--text)}
+.lib-card-desc{font-size:10px;color:var(--sec);line-height:1.4}
+.lib-cat-label{font-size:9.5px;font-weight:600;letter-spacing:.1em;color:var(--dim);text-transform:uppercase;padding:6px 0 4px;border-top:1px solid var(--border);margin-top:4px}
+.lib-cat-label:first-child{border-top:none;margin-top:0;padding-top:0}
+
+/* ── BRAND PRESETS ── */
+.preset-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:20px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-size:10.5px;color:var(--sec);transition:all var(--t-fast);white-space:nowrap}
+.preset-pill:hover{border-color:var(--accent);color:var(--text)}
+.preset-pill .preset-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.preset-pill .preset-del{font-size:9px;color:var(--dim);margin-left:2px;cursor:pointer;padding:0 2px}
+.preset-pill .preset-del:hover{color:var(--red)}
+
+/* ── PER-SLIDE PHOTO INDICATOR ── */
+.photo-slide-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:5px;background:rgba(91,158,201,.12);border:1px solid rgba(91,158,201,.25);color:var(--accent);font-size:10px;font-weight:500;margin-bottom:6px}
+
+/* ── INSERT SLIDE BTN IN COUNT BAR ── */
+#slideCountBar{display:none;width:100%;max-width:600px;background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:8px 14px;align-items:center;justify-content:space-between;flex-shrink:0}
+
+/* ── LAYER CONTROLS (Phase 5 + 6) ── */
+.align-btn{padding:4px 8px;border-radius:5px;border:1px solid var(--border);background:var(--card);color:var(--sec);font-size:12px;cursor:pointer;font-family:'Poppins',sans-serif;transition:all var(--t-fast);min-width:32px;text-align:center}
+.align-btn.on{border-color:var(--accent);background:rgba(91,158,201,.15);color:var(--accent)}
+.align-btn:active{transform:scale(.92)}
+.layer-ctrl-row{display:flex;align-items:center;gap:5px;margin-bottom:6px;flex-wrap:wrap}
+.ctrl-mini{padding:3px 7px;border-radius:5px;border:1px solid var(--border);background:var(--card);color:var(--sec);font-size:10.5px;cursor:pointer;font-family:'Poppins',sans-serif;transition:all var(--t-fast);white-space:nowrap}
+.ctrl-mini:hover{border-color:var(--accent);color:var(--text)}
+.ctrl-mini.on{border-color:var(--accent);background:rgba(91,158,201,.15);color:var(--accent)}
+.ctrl-mini.danger{border-color:rgba(224,85,85,.3);color:var(--red)}
+.ctrl-mini.danger:hover{background:var(--red);color:#fff;border-color:var(--red)}
+.props-sec{font-size:9px;font-weight:600;letter-spacing:.1em;color:var(--dim);text-transform:uppercase;margin:8px 0 5px;padding-top:6px;border-top:1px solid var(--border)}
+.props-sec:first-child{margin-top:0;padding-top:0;border-top:none}
 </style>
 </head>
 <body>
 <div class="toast" id="toast"></div>
 <div class="mob-overlay" id="mobOverlay" onclick="closePanels()"></div>
 
+<!-- PWA INSTALL BANNER -->
+<div id="installBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:500;background:var(--panel);border-top:1px solid var(--border);padding:10px 16px;align-items:center;justify-content:space-between;gap:10px;font-size:11.5px">
+  <span style="color:var(--text)">📱 Add <strong>RBQ Studio</strong> to your home screen</span>
+  <div style="display:flex;gap:6px;flex-shrink:0">
+    <button class="btn btn-accent btn-sm" onclick="installPWA()">Install</button>
+    <button class="btn btn-ghost btn-sm" onclick="dismissInstall()">✕</button>
+  </div>
+</div>
+
+<!-- OFFLINE BANNER -->
+<div id="offlineBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:600;background:rgba(240,192,64,.15);border-bottom:1px solid rgba(240,192,64,.3);padding:6px 16px;text-align:center;font-size:11px;color:var(--yellow)">
+  ⚡ No internet connection — working offline. Changes save locally.
+</div>
+
 <!-- HEADER -->
 <div class="hdr">
-  <div style="display:flex;align-items:center;gap:10px">
+  <div style="display:flex;align-items:center;gap:8px;min-width:0">
     <button class="mob-only hdr-icon" onclick="toggleLeft()">☰</button>
-    <div class="logo">RBQ <em>Studio</em></div>
+    <div class="logo" style="flex-shrink:0">RBQ <em>Studio</em></div>
+    <span id="projectNameDisplay" class="project-name" onclick="renameProject()" title="Click to rename project">Untitled</span>
   </div>
   <div style="display:flex;gap:4px" class="pc-only">
     <button class="ftab on" id="ftab-carousel" onclick="setFormat('carousel')">Carousel 4:5</button>
@@ -241,10 +499,29 @@ input[type=range]{flex:1;accent-color:var(--accent);cursor:pointer}
   <div style="display:flex;gap:4px;align-items:center">
     <button class="hdr-icon pc-only" onclick="showStoryBuilder()" title="Story Builder">📱</button>
     <button class="hdr-icon pc-only" onclick="showLinkedIn()" title="LinkedIn Formatter">💼</button>
+    <button class="hdr-icon pc-only" onclick="openModal('shortcutsModal')" title="Keyboard shortcuts">?</button>
     <button class="hdr-icon" onclick="showHistory()" title="Saved Projects">📂</button>
     <button class="hdr-icon" onclick="showCalendar()" title="Posting Calendar">📅</button>
     <button class="hdr-icon" onclick="showIdeaBank()" title="Idea Bank">💡</button>
     <button class="btn btn-ghost btn-sm pc-only" onclick="newProject()">+ New</button>
+    <div class="drive-wrap" id="driveWrap">
+      <button class="sync-badge" id="syncBadge" onclick="handleSyncClick()" title="Google Drive sync">
+        <span id="syncIndicator">☁</span>
+        <span id="syncLabel" class="pc-only">Drive</span>
+      </button>
+      <div class="drive-menu" id="driveMenu">
+        <div style="font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--dim);text-transform:uppercase;margin-bottom:6px;padding:0 4px">Drive Sync</div>
+        <div id="driveMenuConnected" style="display:none">
+          <div class="drive-menu-item" onclick="driveSaveNow()">💾 Save now</div>
+          <div class="drive-menu-item" onclick="showProjectBrowser()">📂 All projects</div>
+          <div class="drive-menu-item" onclick="driveDisconnect();closeDriveMenu()" style="color:var(--red)">✕ Disconnect</div>
+        </div>
+        <div id="driveMenuDisconnected">
+          <div class="drive-menu-item" onclick="driveConnect();closeDriveMenu()">🔗 Connect Google Drive</div>
+          <div class="drive-menu-item" onclick="showDriveSetupModal();closeDriveMenu()">⚙ Setup guide</div>
+        </div>
+      </div>
+    </div>
     <div class="export-wrap" id="exportBtnWrap">
       <button class="btn btn-green btn-sm" onclick="toggleExportPopover()">⬇ Export ▾</button>
       <div class="export-popover" id="exportPopover">
@@ -255,11 +532,24 @@ input[type=range]{flex:1;accent-color:var(--accent);cursor:pointer}
             <option value="png">PNG</option>
           </select>
         </div>
-        <div style="margin-bottom:12px">
+        <div style="margin-bottom:10px">
           <div class="lsec-title" style="margin-bottom:5px">Filename prefix</div>
           <input id="exportPrefix" placeholder="prefix..." style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'Poppins',sans-serif;font-size:11px;padding:5px 8px;outline:none" value="rbellaquero">
         </div>
-        <button class="btn btn-green" style="width:100%;justify-content:center" onclick="exportAll();toggleExportPopover()">⬇ Export All slides</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:11px;color:var(--sec)">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="checkbox" id="exportWatermark" style="accent-color:var(--accent);width:13px;height:13px;cursor:pointer">
+            Watermark @rbellaquero
+          </label>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;font-size:11px;color:var(--sec)">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="checkbox" id="exportToDrive" style="accent-color:var(--accent);width:13px;height:13px;cursor:pointer">
+            Upload to Drive after export
+          </label>
+        </div>
+        <button class="btn btn-green" style="width:100%;justify-content:center;margin-bottom:6px" onclick="exportAll();toggleExportPopover()">⬇ Export All slides</button>
+        <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;font-size:10.5px" onclick="copyActiveSlideToClipboard();toggleExportPopover()">📋 Copy active slide</button>
       </div>
     </div>
   </div>
@@ -287,6 +577,7 @@ input[type=range]{flex:1;accent-color:var(--accent);cursor:pointer}
     <button class="lpanel-tab on" data-tab="copy" onclick="switchLpanelTab('copy')">Copy</button>
     <button class="lpanel-tab" data-tab="style" onclick="switchLpanelTab('style')">Style</button>
     <button class="lpanel-tab" data-tab="photo" onclick="switchLpanelTab('photo')">Photo</button>
+    <button class="lpanel-tab" data-tab="ai" onclick="switchLpanelTab('ai')" style="color:var(--purple)">AI ✦</button>
   </div>
 
   <!-- PANE: COPY -->
@@ -339,10 +630,18 @@ input[type=range]{flex:1;accent-color:var(--accent);cursor:pointer}
       <div class="lsec-title">Carousel Variant</div>
       <button class="btn btn-ghost btn-sm" onclick="dupCarouselColorSwap()" style="margin-top:6px;width:100%;font-size:11px">⧉ Duplicate with next color</button>
     </div>
+    <div>
+      <div class="lsec-title">Brand Presets</div>
+      <div id="presetsList" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;margin-bottom:7px"></div>
+      <button class="btn btn-ghost btn-sm" onclick="saveBrandPreset()" style="width:100%;font-size:10.5px">＋ Save current as preset</button>
+    </div>
   </div>
 
   <!-- PANE: PHOTO -->
   <div class="lpanel-pane" data-pane="photo" style="padding:12px 13px;gap:10px">
+    <div id="photoSlideContext" style="display:none">
+      <div class="photo-slide-badge" id="photoSlideBadge">📷 Active slide photo</div>
+    </div>
     <div>
       <div class="lsec-title">Upload</div>
       <label for="photoFile" class="photo-uploader" style="margin-top:6px">
@@ -359,7 +658,55 @@ input[type=range]{flex:1;accent-color:var(--accent);cursor:pointer}
         <button class="filter-btn" onclick="setFilter('dark',this)">Dark</button>
         <button class="filter-btn" onclick="setFilter('contrast',this)">Contrast</button>
       </div>
-      <button class="btn btn-ghost btn-sm" style="margin-top:10px;width:100%;font-size:10.5px" onclick="removePhoto()">✕ Remove photo</button>
+      <button class="btn btn-accent btn-sm" style="margin-top:10px;width:100%;font-size:10.5px;justify-content:center" onclick="addPhotoToActiveSlide()">＋ Add to active slide</button>
+      <button class="btn btn-ghost btn-sm" style="margin-top:6px;width:100%;font-size:10.5px" onclick="removePhoto()">✕ Remove photo</button>
+    </div>
+  </div>
+
+  <!-- PANE: AI -->
+  <div class="lpanel-pane" data-pane="ai" style="padding:12px 13px;gap:10px">
+    <div>
+      <div class="lsec-title">Claude API Key</div>
+      <div style="display:flex;gap:5px;margin-top:6px">
+        <input type="password" id="claudeKeyInput" placeholder="sk-ant-..." style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'Poppins',sans-serif;font-size:11px;padding:6px 9px;outline:none">
+        <button class="btn btn-ghost btn-sm" onclick="saveClaudeKey()">Save</button>
+      </div>
+      <div id="claudeKeyStatus" style="font-size:10px;color:var(--dim);margin-top:4px">No key saved</div>
+    </div>
+    <div>
+      <div class="lsec-title">Copywriter</div>
+      <div style="font-size:10.5px;color:var(--sec);margin-bottom:6px">Generates tagged carousel copy from a topic.</div>
+      <input id="aiTopic" placeholder="Topic (e.g. anxiety in relationships)..." style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'Poppins',sans-serif;font-size:11px;padding:6px 9px;outline:none;margin-bottom:6px">
+      <button class="btn btn-purple btn-sm" style="width:100%;justify-content:center" onclick="aiCopywriter()">✦ Generate copy</button>
+    </div>
+    <div>
+      <div class="lsec-title">Caption Writer</div>
+      <div style="font-size:10.5px;color:var(--sec);margin-bottom:6px">Writes an Instagram caption from current slides.</div>
+      <button class="btn btn-purple btn-sm" style="width:100%;justify-content:center" onclick="aiCaption()">✦ Write caption</button>
+    </div>
+    <div>
+      <div class="lsec-title">Hashtag Suggester</div>
+      <div style="font-size:10.5px;color:var(--sec);margin-bottom:6px">Suggests hashtags based on slide content.</div>
+      <button class="btn btn-purple btn-sm" style="width:100%;justify-content:center" onclick="aiHashtags()">✦ Suggest hashtags</button>
+    </div>
+    <div>
+      <div class="lsec-title">Tone Rewriter</div>
+      <div style="font-size:10.5px;color:var(--sec);margin-bottom:6px">Rewrites active slide text in a chosen tone.</div>
+      <select id="aiTone" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'Poppins',sans-serif;font-size:11px;padding:6px 8px;outline:none;cursor:pointer;margin-bottom:6px">
+        <option value="warm">Warm &amp; empathetic</option>
+        <option value="professional">Professional &amp; precise</option>
+        <option value="direct">Direct &amp; concise</option>
+        <option value="reflective">Reflective &amp; introspective</option>
+      </select>
+      <button class="btn btn-purple btn-sm" style="width:100%;justify-content:center" onclick="aiToneRewrite()">✦ Rewrite active slide</button>
+    </div>
+    <div id="aiOutput" style="display:none">
+      <div class="lsec-title" style="margin-bottom:6px">AI Output</div>
+      <textarea id="aiOutputTa" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'Poppins',sans-serif;font-size:11px;padding:8px;outline:none;resize:vertical;min-height:80px;line-height:1.6" readonly></textarea>
+      <div style="display:flex;gap:5px;margin-top:6px">
+        <button class="btn btn-ghost btn-sm" onclick="copyAiOutput()" style="flex:1;justify-content:center">📋 Copy</button>
+        <button class="btn btn-accent btn-sm" id="aiLoadBtn" style="flex:1;justify-content:center;display:none" onclick="loadAiToCopy()">⚡ Load to Copy</button>
+      </div>
     </div>
   </div>
 </div>
@@ -375,9 +722,10 @@ input[type=range]{flex:1;accent-color:var(--accent);cursor:pointer}
     </div>
   </div>
 
-  <!-- SLIDE COUNT BAR (single, no duplicate) -->
-  <div id="slideCountBar" style="display:none;width:100%;max-width:600px;background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:8px 14px;align-items:center;justify-content:space-between;flex-shrink:0">
+  <!-- SLIDE COUNT BAR -->
+  <div id="slideCountBar">
     <span id="slideCountLabel" style="font-size:11.5px;font-weight:500"></span>
+    <button class="btn btn-ghost btn-sm" onclick="showSlideLibrary()" style="font-size:11px;gap:4px">＋ Insert slide</button>
   </div>
 
   <div id="thumbsGrid"></div>
@@ -390,8 +738,26 @@ input[type=range]{flex:1;accent-color:var(--accent);cursor:pointer}
         <span id="captionArrow" style="font-size:11px;color:var(--sec)">▴</span>
       </div>
       <div class="caption-drawer-body" id="captionDrawerBody">
-        <textarea id="captionTa" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Poppins',sans-serif;font-size:11px;line-height:1.7;padding:8px;resize:vertical;outline:none;min-height:60px;margin-bottom:6px" placeholder="Instagram caption..."></textarea>
-        <textarea id="hashtagTa" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--sec);font-family:'Poppins',sans-serif;font-size:10.5px;line-height:1.6;padding:8px;resize:vertical;outline:none;min-height:44px;margin-bottom:8px" placeholder="#hashtags for first comment...">#Psicología #Psicoterapia #SaludMental #BuenosAires #Teleconsulta #PsicologíaClínica</textarea>
+        <!-- Caption -->
+        <div style="position:relative;margin-bottom:4px">
+          <textarea id="captionTa" oninput="updateCaptionCounter()" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Poppins',sans-serif;font-size:11px;line-height:1.7;padding:8px;resize:vertical;outline:none;min-height:60px" placeholder="Instagram caption..."></textarea>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;gap:6px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="captionCharCount" style="font-size:10px;color:var(--sec)">0 / 2200</span>
+            <span id="captionFirstLine" style="font-size:10px;color:var(--dim)">First 125: –</span>
+          </div>
+          <button class="ctrl-mini" onclick="copyCaption()" title="Copy caption">📋 Copy</button>
+        </div>
+        <!-- Hashtags -->
+        <textarea id="hashtagTa" oninput="updateHashtagCounter()" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--sec);font-family:'Poppins',sans-serif;font-size:10.5px;line-height:1.6;padding:8px;resize:vertical;outline:none;min-height:44px;margin-bottom:4px" placeholder="#hashtags for first comment...">#Psicología #Psicoterapia #SaludMental #BuenosAires #Teleconsulta #PsicologíaClínica</textarea>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:6px">
+          <span id="hashtagCount" style="font-size:10px;color:var(--sec)">0 hashtags</span>
+          <div style="display:flex;gap:4px">
+            <button class="ctrl-mini" onclick="copyHashtags()" title="Copy hashtags">📋 Copy</button>
+            <button class="ctrl-mini danger" onclick="clearHashtags()" title="Clear hashtags">✕</button>
+          </div>
+        </div>
         <div class="lsec-title" style="margin-bottom:6px">Smart Hashtags</div>
         <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px" id="hashtagCategories">
           <button class="htag-pill" onclick="toggleHashtagPill('local',this)">🇦🇷 Local AR</button>
@@ -455,12 +821,48 @@ input[type=range]{flex:1;accent-color:var(--accent);cursor:pointer}
 <!-- MOBILE EXPORT FAB -->
 <button class="export-fab mob-only" onclick="exportAll()" title="Export all slides">⬇</button>
 
-<!-- CALENDAR MODAL -->
+<!-- MOBILE SLIDE NAV ARROWS -->
+<div class="slide-nav-bar" id="slideNavBar">
+  <button class="slide-nav-btn" id="slideNavPrev" onclick="navSlide(-1)" title="Previous slide">◀</button>
+  <span id="slideNavLabel" style="font-size:10px;color:var(--sec);background:rgba(12,20,34,.8);padding:3px 10px;border-radius:10px;border:1px solid var(--border);backdrop-filter:blur(6px)"></span>
+  <button class="slide-nav-btn" id="slideNavNext" onclick="navSlide(1)" title="Next slide">▶</button>
+</div>
+
+<!-- CALENDAR / PLANNER MODAL -->
 <div class="modal-overlay" id="calModal">
-  <div class="modal" style="max-width:500px">
-    <h2>📅 Posting Calendar</h2>
-    <div style="font-size:11px;color:var(--sec);margin-bottom:12px">Recommended schedule: Tue/Thu 19:30, Sat 11:00, Sun 20:00</div>
-    <div id="calGrid"></div>
+  <div class="modal" style="max-width:520px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <h2 style="margin:0">📅 Content Planner</h2>
+      <div style="display:flex;gap:5px">
+        <button class="ftab on" id="calTabSchedule" onclick="switchCalTab('schedule')">Schedule</button>
+        <button class="ftab" id="calTabSeries" onclick="switchCalTab('series')">Series</button>
+        <button class="ftab" id="calTabQueue" onclick="switchCalTab('queue')">Queue</button>
+      </div>
+    </div>
+
+    <!-- SCHEDULE -->
+    <div id="calPaneSchedule">
+      <div style="font-size:11px;color:var(--sec);margin-bottom:10px">Optimal posting windows for your audience. Assign your current project to any slot.</div>
+      <div id="calGrid"></div>
+    </div>
+
+    <!-- SERIES TRACKER -->
+    <div id="calPaneSeries" style="display:none">
+      <div style="font-size:11px;color:var(--sec);margin-bottom:10px">Track multi-part content series. Know what's published and what's pending.</div>
+      <div style="display:flex;gap:5px;margin-bottom:10px">
+        <input id="seriesNameInput" placeholder="Series name..." style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'Poppins',sans-serif;font-size:11px;padding:6px 9px;outline:none">
+        <input type="number" id="seriesTotalInput" min="2" max="20" value="5" title="Total parts" style="width:44px;background:var(--card);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'Poppins',sans-serif;font-size:11px;padding:6px;outline:none;text-align:center">
+        <button class="btn btn-accent btn-sm" onclick="addSeries()">Add</button>
+      </div>
+      <div id="seriesList"></div>
+    </div>
+
+    <!-- DRAFT QUEUE -->
+    <div id="calPaneQueue" style="display:none">
+      <div style="font-size:11px;color:var(--sec);margin-bottom:10px">Recent projects from history. Load any to continue working on it.</div>
+      <div id="queueList"></div>
+    </div>
+
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
       <button class="btn btn-ghost btn-sm" onclick="closeModal('calModal')">Close</button>
     </div>
@@ -671,6 +1073,52 @@ input[type=range]{flex:1;accent-color:var(--accent);cursor:pointer}
   </div>
 </div>
 
+<!-- SLIDE LIBRARY MODAL -->
+<div class="modal-overlay" id="slideLibModal">
+  <div class="modal" style="max-width:480px">
+    <h2>＋ Insert Slide</h2>
+    <div style="font-size:11px;color:var(--sec);margin-bottom:12px">Pick a slide type to insert after the current slide.</div>
+    <div id="slideLibGrid"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('slideLibModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHORTCUTS MODAL -->
+<div class="modal-overlay" id="shortcutsModal">
+  <div class="modal" style="max-width:420px">
+    <h2>⌨ Keyboard Shortcuts</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 20px;font-size:11.5px">
+      <div style="font-size:9.5px;font-weight:600;letter-spacing:.1em;color:var(--dim);text-transform:uppercase;padding-bottom:5px;border-bottom:1px solid var(--border);margin-bottom:2px;grid-column:1/-1">Navigation</div>
+      <div style="color:var(--sec)">← / →</div><div>Navigate slides</div>
+      <div style="color:var(--sec)">D</div><div>Duplicate active slide</div>
+      <div style="color:var(--sec)">Delete / ⌫</div><div>Delete active slide</div>
+      <div style="color:var(--sec)">Escape</div><div>Deselect / close panels</div>
+      <div style="font-size:9.5px;font-weight:600;letter-spacing:.1em;color:var(--dim);text-transform:uppercase;padding-bottom:5px;border-bottom:1px solid var(--border);margin:10px 0 2px;grid-column:1/-1">Actions</div>
+      <div style="color:var(--sec)">Ctrl / ⌘ Z</div><div>Undo</div>
+      <div style="color:var(--sec)">Ctrl / ⌘ E</div><div>Export all slides</div>
+      <div style="color:var(--sec)">Ctrl / ⌘ K</div><div>Command palette</div>
+      <div style="color:var(--sec)">?</div><div>Show this help</div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('shortcutsModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- COMMAND PALETTE -->
+<div id="cmdPalette" style="display:none;position:fixed;inset:0;z-index:950;background:rgba(0,0,0,.65);backdrop-filter:blur(4px)" onclick="closeCmdPaletteOverlay(event)">
+  <div style="position:absolute;top:15vh;left:50%;transform:translateX(-50%);width:min(540px,92vw);background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,.7)">
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)">
+      <span style="font-size:15px;color:var(--dim)">⌘</span>
+      <input id="cmdInput" placeholder="Search actions..." autocomplete="off" style="flex:1;background:transparent;border:none;color:var(--text);font-family:'Poppins',sans-serif;font-size:13px;outline:none" oninput="filterCmd(this.value)" onkeydown="cmdKey(event)">
+      <span style="font-size:10px;color:var(--dim);background:var(--card);border:1px solid var(--border);border-radius:5px;padding:2px 8px">Esc</span>
+    </div>
+    <div id="cmdList" style="max-height:55vh;overflow-y:auto;padding:6px"></div>
+  </div>
+</div>
+
 <script>
 // ══════════════════════════════════════════════════════
 // STATE
@@ -774,9 +1222,15 @@ function getFilterCSS(f) {
 // SLIDE DIMENSIONS
 // ══════════════════════════════════════════════════════
 function slideDims(forExport) {
-  const isSt = S.format === 'story';
-  if (forExport) return { W: 1080, H: isSt ? 1920 : 1350 };
-  return { W: isSt ? 270 : 360, H: isSt ? 480 : 450 };
+  const f = S.format;
+  if (forExport) {
+    if (f === 'story' || f === 'reel') return { W: 1080, H: 1920 };
+    if (f === 'cover') return { W: 1080, H: 1080 };
+    return { W: 1080, H: 1350 }; // carousel 4:5
+  }
+  if (f === 'story' || f === 'reel') return { W: 270, H: 480 };
+  if (f === 'cover') return { W: 360, H: 360 };
+  return { W: 360, H: 450 }; // carousel
 }
 
 function canvasDims() {
@@ -879,8 +1333,21 @@ function renderLayerEl(layer, scaleX, scaleY, forCanvas) {
   const fs = Math.round((layer.fontSize || 14) * scaleX);
   const acc = layer.accentColor || S.accent;
 
-  el.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;overflow:hidden;font-family:'Poppins',sans-serif`;
+  const opacity = layer.opacity !== undefined ? layer.opacity : 1;
+  el.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;overflow:hidden;font-family:'Poppins',sans-serif;opacity:${opacity}`;
   el.dataset.layerId = layer.id;
+
+  const tAlign = layer.textAlign || 'left';
+  const lh = layer.lineHeight || null;
+  const ls = layer.letterSpacing || null;
+
+  const textLineStyle = () => {
+    let s = '';
+    if (tAlign !== 'left') s += `text-align:${tAlign};`;
+    if (lh) s += `line-height:${lh};`;
+    if (ls) s += `letter-spacing:${ls}em;`;
+    return s;
+  };
 
   if (layer.type === 'footer') {
     el.style.cssText += `;background:transparent`;
@@ -890,10 +1357,12 @@ function renderLayerEl(layer, scaleX, scaleY, forCanvas) {
   } else if (layer.type === 'headline' || layer.type === 'highlight' || layer.type === 'swipe') {
     const color = layer.color || '#fff';
     const lines = (layer.text||'').split('\n');
-    el.innerHTML = lines.map(ln => `<div style="font-size:${fs}px;font-weight:${layer.bold?600:400};color:${color};line-height:1.3;margin-bottom:2px">${escHtml(ln)}</div>`).join('');
+    const ts = textLineStyle();
+    el.innerHTML = lines.map(ln => `<div style="font-size:${fs}px;font-weight:${layer.bold?600:400};color:${color};line-height:${lh||1.3};margin-bottom:2px;${ts}">${escHtml(ln)}</div>`).join('');
   } else if (layer.type === 'body' || layer.type === 'wa') {
     const lines = (layer.text||'').split('\n');
-    el.innerHTML = lines.map(ln => `<div style="font-size:${fs}px;font-weight:${layer.bold?600:400};color:${layer.color||'#E8ECF5'};line-height:1.8;margin-bottom:1px">${escHtml(ln)}</div>`).join('');
+    const ts = textLineStyle();
+    el.innerHTML = lines.map(ln => `<div style="font-size:${fs}px;font-weight:${layer.bold?600:400};color:${layer.color||'#E8ECF5'};line-height:${lh||1.8};margin-bottom:1px;${ts}">${escHtml(ln)}</div>`).join('');
   } else if (layer.type === 'accent-bar') {
     el.style.cssText += `;padding-left:${Math.round(10*scaleX)}px`;
     const bar = document.createElement('div');
@@ -925,6 +1394,12 @@ function renderLayerEl(layer, scaleX, scaleY, forCanvas) {
       el.style.cssText += `;border:2px dashed #1F3D5A;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#8899BB;font-size:${fs}px;text-align:center`;
       el.textContent = '📷 Upload photo';
     }
+  } else if (layer.type === 'shape') {
+    const radius = layer.shape === 'circle' ? '50%' : (layer.borderRadius ? layer.borderRadius + 'px' : '4px');
+    const fill = layer.color || 'rgba(91,158,201,0.25)';
+    const stroke = layer.borderColor || acc;
+    const bw = layer.borderWidth !== undefined ? layer.borderWidth : 1;
+    el.style.cssText += `;background:${fill};border:${Math.round(bw*scaleX)}px solid ${stroke};border-radius:${radius}`;
   } else if (layer.type === 'identity') {
     const nfs = Math.round(14*scaleX);
     el.innerHTML = `<div style="font-size:${nfs}px;font-weight:600;color:#fff;line-height:1.2;margin-bottom:${Math.round(nfs*0.5)}px">Rodolfo<br>Bella Quero</div><div style="display:flex;align-items:center;gap:4px;margin-bottom:${Math.round(nfs*0.4)}px"><div style="width:2px;height:${Math.round(nfs*0.6)}px;background:${acc};flex-shrink:0;border-radius:1px"></div><div style="font-size:${Math.round(nfs*0.62)}px;font-weight:600;color:#fff">Psicólogo Clínico</div></div><div style="font-size:${Math.round(nfs*0.52)}px;color:#E8ECF5;line-height:1.7">Más de 20 años<br>Depresión · Ansiedad<br>Trauma · Complejidad<br>Bs Aires · Teleconsulta</div>`;
@@ -969,9 +1444,12 @@ function renderThumbs() {
     acts.innerHTML = `<button class="ta-btn" onclick="event.stopPropagation();dupSlide(${i})">⧉</button><button class="ta-btn" onclick="event.stopPropagation();moveSlide(${i},-1)">←</button><button class="ta-btn" onclick="event.stopPropagation();moveSlide(${i},1)">→</button><button class="ta-btn" onclick="event.stopPropagation();exportSingleSlide(${i})" title="Export this slide only">⬇</button><button class="ta-btn" onclick="event.stopPropagation();quickEditSlide(${i})" title="Quick edit text">✎</button><button class="ta-btn" onclick="event.stopPropagation();delSlide(${i})" style="color:#E05555">✕</button>`;
 
     wrap.appendChild(num); wrap.appendChild(sb); wrap.appendChild(canvas); wrap.appendChild(acts);
+    wrap.style.animation = `thumbIn .2s ease both`;
+    wrap.style.animationDelay = `${i * 28}ms`;
     container.appendChild(wrap);
   });
   updateSlideCountBar();
+  updateSlideNavBar();
 }
 
 // ══════════════════════════════════════════════════════
@@ -1006,7 +1484,7 @@ function openCanvas(slideIdx) {
   const canvas = document.createElement('div');
   canvas.className = 'canvas-editor';
   canvas.id = 'mainCanvas';
-  canvas.style.cssText = `width:${cW}px;height:${cH}px;background:${slide.bgColor||'#152D47'};position:relative;overflow:hidden;font-family:'Poppins',sans-serif`;
+  canvas.style.cssText = `width:${cW}px;height:${cH}px;background:${slide.bgColor||'#152D47'};position:relative;overflow:hidden;font-family:'Poppins',sans-serif;animation:canvasFadeIn .18s ease both`;
 
   // Render all layers
   slide.layers.forEach(layer => {
@@ -1039,6 +1517,7 @@ function openCanvas(slideIdx) {
     document.getElementById('rpanel').classList.add('open');
     document.getElementById('mobOverlay').classList.add('show');
   }
+  updatePhotoSlideContext();
 }
 
 function setupLayerDrag(el, layer, scaleX, scaleY, slideIdx, cW, cH, sW, sH) {
@@ -1120,35 +1599,126 @@ function renderPropsPanel(layer, wrap, slideIdx, scaleX) {
 
   const editableTypes = ['headline','body','accent-bar','highlight','signals','cta','wa','swipe','tag','bilingual'];
   const isText = editableTypes.includes(layer.type);
+  const isShape = layer.type === 'shape';
+
+  const ta = layer.textAlign || 'left';
+  const opPct = Math.round((layer.opacity !== undefined ? layer.opacity : 1) * 100);
+  const lhVal = layer.lineHeight || (layer.type === 'body' || layer.type === 'wa' ? 1.8 : 1.3);
+  const lsVal = layer.letterSpacing || 0;
+  const swatches = ['#5B9EC9','#3D9E8C','#9B7EC8','#4A6FA5','#8BAFC4','#C4844A','#D28041','#C4A882','#7BA05B','#B07A7A'];
 
   panel.innerHTML = `
-    <div class="lbl">Layer: ${layer.type}</div>
-    ${isText ? `
-    <div class="props-row"><span class="props-label">Text</span><textarea class="props-ta" oninput="updateLayerText(${slideIdx},${layer.id},this.value)">${escHtml(layer.text||'')}</textarea></div>
-    <div class="props-row" style="flex-direction:column;align-items:flex-start;gap:5px">
-      <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
-        <span class="props-label" style="width:auto">Font size</span>
-        <span id="liveFontVal" style="font-size:11px;color:var(--accent);font-weight:600">${layer.fontSize||14}px</span>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div class="lbl" style="margin:0">Layer: <em style="color:var(--accent);font-style:normal">${layer.type}</em></div>
+      <div style="display:flex;gap:4px">
+        <button class="ctrl-mini${layer.locked?' on':''}" onclick="toggleLayerLock(${slideIdx},${layer.id})" title="${layer.locked?'Unlock':'Lock'} layer">${layer.locked?'🔒':'🔓'}</button>
+        <button class="ctrl-mini" onclick="bringLayerForward(${slideIdx},${layer.id})" title="Bring forward">↑</button>
+        <button class="ctrl-mini" onclick="sendLayerBack(${slideIdx},${layer.id})" title="Send back">↓</button>
       </div>
-      <input type="range" min="6" max="80" value="${layer.fontSize||14}" 
-        oninput="liveUpdateFont(${slideIdx},${layer.id},this.value)"
-        onchange="commitFont(${slideIdx},${layer.id},this.value)"
-        style="width:100%;accent-color:var(--accent);cursor:pointer" id="liveFontSlider">
     </div>
-    <div class="props-row"><span class="props-label">Color</span><input type="color" value="${layer.color||'#ffffff'}" oninput="liveUpdateColor(${slideIdx},${layer.id},this.value)" style="width:36px;height:24px;border-radius:5px;border:1px solid var(--border);cursor:pointer;padding:0">
-    <span style="color:var(--sec);font-size:10px;margin-left:6px">Accent:</span><input type="color" value="${layer.accentColor||S.accent}" oninput="updateLayerAccent(${slideIdx},${layer.id},this.value)" style="width:36px;height:24px;border-radius:5px;border:1px solid var(--border);cursor:pointer;padding:0"><br><div style='display:flex;flex-wrap:wrap;gap:4px;margin-top:6px'>${['#5B9EC9','#3D9E8C','#9B7EC8','#4A6FA5','#8BAFC4','#C4844A','#D28041','#C4A882','#7BA05B','#B07A7A'].map(c=>`<div style='width:18px;height:18px;border-radius:50%;background:${c};cursor:pointer;border:2px solid ${(layer.accentColor||S.accent)===c?'#fff':'transparent'}' onclick="updateLayerAccent(${slideIdx},${layer.id},'${c}',this)"></div>`).join('')}</div>
-    </div>` : ''}
-    <details style="margin-top:2px">
-      <summary style="cursor:pointer;font-size:10px;color:var(--dim);user-select:none;padding:4px 0;list-style:none">Advanced ▾ <span style="font-size:9px">(position &amp; size)</span></summary>
+
+    <!-- Opacity -->
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+      <span style="font-size:10px;color:var(--sec);width:48px;flex-shrink:0">Opacity</span>
+      <input type="range" min="0" max="100" value="${opPct}" id="opacitySlider"
+        oninput="liveUpdateOpacity(${slideIdx},${layer.id},this.value)"
+        onchange="commitOpacity(${slideIdx},${layer.id},this.value)"
+        style="flex:1;accent-color:var(--accent);cursor:pointer">
+      <span id="opacityVal" style="font-size:10px;color:var(--accent);font-weight:600;width:34px;text-align:right">${opPct}%</span>
+    </div>
+
+    ${isText ? `
+    <!-- Text content -->
+    <div class="props-sec">Text</div>
+    <div class="props-row"><textarea class="props-ta" oninput="updateLayerText(${slideIdx},${layer.id},this.value)">${escHtml(layer.text||'')}</textarea></div>
+
+    <!-- Font size -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+      <span style="font-size:10px;color:var(--sec)">Font size</span>
+      <span id="liveFontVal" style="font-size:11px;color:var(--accent);font-weight:600">${layer.fontSize||14}px</span>
+    </div>
+    <input type="range" min="6" max="80" value="${layer.fontSize||14}"
+      oninput="liveUpdateFont(${slideIdx},${layer.id},this.value)"
+      onchange="commitFont(${slideIdx},${layer.id},this.value)"
+      style="width:100%;accent-color:var(--accent);cursor:pointer;margin-bottom:8px" id="liveFontSlider">
+
+    <!-- Alignment + Bold -->
+    <div class="layer-ctrl-row">
+      <button class="align-btn${ta==='left'?' on':''}" onclick="setLayerAlign(${slideIdx},${layer.id},'left')" title="Align left">≡</button>
+      <button class="align-btn${ta==='center'?' on':''}" onclick="setLayerAlign(${slideIdx},${layer.id},'center')" title="Align center">☰</button>
+      <button class="align-btn${ta==='right'?' on':''}" onclick="setLayerAlign(${slideIdx},${layer.id},'right')" title="Align right">≡</button>
+      <button class="ctrl-mini${layer.bold?' on':''}" onclick="toggleLayerBold(${slideIdx},${layer.id})" style="margin-left:4px;font-weight:700">B</button>
+    </div>
+
+    <!-- Line height -->
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+      <span style="font-size:10px;color:var(--sec);width:48px;flex-shrink:0">Leading</span>
+      <input type="range" min="1" max="3" step="0.05" value="${lhVal}" id="lhSlider"
+        oninput="liveUpdateLineHeight(${slideIdx},${layer.id},this.value)"
+        onchange="commitLineHeight(${slideIdx},${layer.id},this.value)"
+        style="flex:1;accent-color:var(--accent);cursor:pointer">
+      <span id="lhVal" style="font-size:10px;color:var(--accent);font-weight:600;width:34px;text-align:right">${lhVal.toFixed(1)}×</span>
+    </div>
+
+    <!-- Letter spacing -->
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+      <span style="font-size:10px;color:var(--sec);width:48px;flex-shrink:0">Spacing</span>
+      <input type="range" min="-0.05" max="0.3" step="0.01" value="${lsVal}" id="lsSlider"
+        oninput="liveUpdateLetterSpacing(${slideIdx},${layer.id},this.value)"
+        onchange="commitLetterSpacing(${slideIdx},${layer.id},this.value)"
+        style="flex:1;accent-color:var(--accent);cursor:pointer">
+      <span id="lsVal" style="font-size:10px;color:var(--accent);font-weight:600;width:34px;text-align:right">${lsVal.toFixed(2)}</span>
+    </div>
+
+    <!-- Color -->
+    <div class="props-sec">Color</div>
+    <div class="props-row">
+      <span class="props-label">Text</span>
+      <input type="color" value="${layer.color||'#ffffff'}" oninput="liveUpdateColor(${slideIdx},${layer.id},this.value)" style="width:32px;height:24px;border-radius:5px;border:1px solid var(--border);cursor:pointer;padding:0">
+      <span style="color:var(--sec);font-size:10px;margin-left:4px">Accent</span>
+      <input type="color" value="${layer.accentColor||S.accent}" oninput="updateLayerAccent(${slideIdx},${layer.id},this.value)" style="width:32px;height:24px;border-radius:5px;border:1px solid var(--border);cursor:pointer;padding:0">
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">${swatches.map(c=>`<div style="width:18px;height:18px;border-radius:50%;background:${c};cursor:pointer;border:2px solid ${(layer.accentColor||S.accent)===c?'#fff':'transparent'}" onclick="updateLayerAccent(${slideIdx},${layer.id},'${c}')"></div>`).join('')}</div>
+    ` : ''}
+
+    ${isShape ? `
+    <!-- Shape fill + border -->
+    <div class="props-sec">Shape</div>
+    <div class="props-row">
+      <span class="props-label">Fill</span>
+      <input type="color" value="${layer.color||'#5B9EC9'}" oninput="liveUpdateColor(${slideIdx},${layer.id},this.value)" style="width:32px;height:24px;border-radius:5px;border:1px solid var(--border);cursor:pointer;padding:0">
+      <span style="color:var(--sec);font-size:10px;margin-left:4px">Border</span>
+      <input type="color" value="${layer.borderColor||S.accent}" oninput="updateLayerBorderColor(${slideIdx},${layer.id},this.value)" style="width:32px;height:24px;border-radius:5px;border:1px solid var(--border);cursor:pointer;padding:0">
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+      <span style="font-size:10px;color:var(--sec);width:48px;flex-shrink:0">Radius</span>
+      <input type="range" min="0" max="80" value="${layer.borderRadius||4}"
+        onchange="setLayerRadius(${slideIdx},${layer.id},this.value)"
+        style="flex:1;accent-color:var(--accent);cursor:pointer">
+    </div>
+    ` : ''}
+
+    <!-- Position & size -->
+    <details style="margin-top:4px">
+      <summary style="cursor:pointer;font-size:10px;color:var(--dim);user-select:none;padding:4px 0;list-style:none">Position &amp; size ▾</summary>
       <div style="margin-top:6px">
-        <div class="props-row"><span class="props-label">X</span><input type="number" class="props-input" value="${Math.round(layer.x)}" style="width:60px" oninput="updateLayerPos(${slideIdx},${layer.id},'x',this.value)"><span class="props-label" style="width:20px;margin-left:6px">Y</span><input type="number" class="props-input" value="${Math.round(layer.y)}" style="width:60px" oninput="updateLayerPos(${slideIdx},${layer.id},'y',this.value)"></div>
-        <div class="props-row"><span class="props-label">W</span><input type="number" class="props-input" value="${Math.round(layer.w)}" style="width:60px" oninput="updateLayerSize(${slideIdx},${layer.id},'w',this.value)"><span class="props-label" style="width:20px;margin-left:6px">H</span><input type="number" class="props-input" value="${Math.round(layer.h)}" style="width:60px" oninput="updateLayerSize(${slideIdx},${layer.id},'h',this.value)"></div>
+        <div class="props-row"><span class="props-label">X</span><input type="number" class="props-input" value="${Math.round(layer.x)}" style="width:56px" oninput="updateLayerPos(${slideIdx},${layer.id},'x',this.value)"><span class="props-label" style="width:18px;margin-left:4px">Y</span><input type="number" class="props-input" value="${Math.round(layer.y)}" style="width:56px" oninput="updateLayerPos(${slideIdx},${layer.id},'y',this.value)"></div>
+        <div class="props-row"><span class="props-label">W</span><input type="number" class="props-input" value="${Math.round(layer.w)}" style="width:56px" oninput="updateLayerSize(${slideIdx},${layer.id},'w',this.value)"><span class="props-label" style="width:18px;margin-left:4px">H</span><input type="number" class="props-input" value="${Math.round(layer.h)}" style="width:56px" oninput="updateLayerSize(${slideIdx},${layer.id},'h',this.value)"></div>
       </div>
     </details>
-    <div style="display:flex;gap:5px;margin-top:6px;flex-wrap:wrap">
-      <button class="btn btn-ghost btn-sm" onclick="resetLayerLayout(${slideIdx})" title="Reset all layers to auto layout">↺ Reset</button>
-      <button class="btn btn-ghost btn-sm" onclick="dupLayer(${slideIdx},${layer.id})">⧉ Duplicate</button>
-      <button class="btn btn-sm" style="background:#E05555;color:#fff;border:none;cursor:pointer;border-radius:6px;font-family:'Poppins',sans-serif;padding:5px 9px;font-size:11px" onclick="delLayer(${slideIdx},${layer.id})">Delete</button>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap">
+      <button class="ctrl-mini" onclick="resetLayerLayout(${slideIdx})" title="Reset to auto layout">↺ Reset</button>
+      <button class="ctrl-mini" onclick="dupLayer(${slideIdx},${layer.id})">⧉ Dup</button>
+      <button class="ctrl-mini danger" onclick="delLayer(${slideIdx},${layer.id})">✕ Delete</button>
+    </div>
+
+    <!-- Add shape shortcut -->
+    <div class="props-sec">Add to slide</div>
+    <div class="layer-ctrl-row">
+      <button class="ctrl-mini" onclick="addShapeLayer(${slideIdx},'rect')">□ Rectangle</button>
+      <button class="ctrl-mini" onclick="addShapeLayer(${slideIdx},'circle')">○ Circle</button>
     </div>
   `;
   wrap.appendChild(panel);
@@ -1242,7 +1812,7 @@ function setBgColor(si, color, el) {
   save();
 }
 
-function resetLayerLayout(si) { saveUndo(); autoLayout(S.slides[si]); openCanvas(si); renderThumbs(); save(); showToast('Layout reset'); }
+function resetLayerLayout(si) { saveUndo(); autoLayout(S.slides[si]); openCanvas(si); renderThumbs(); save(); showToast('Layout reset', 'success'); }
 
 function dupLayer(si, lid) {
   const slide = S.slides[si];
@@ -1261,6 +1831,136 @@ function delLayer(si, lid) {
   openCanvas(si); renderThumbs(); save();
 }
 
+// ── Phase 5: Layer controls ──────────────────────────
+
+function toggleLayerLock(si, lid) {
+  const l = findLayer(si, lid);
+  if (!l) return;
+  l.locked = !l.locked;
+  openCanvas(si); save();
+  showToast(l.locked ? '🔒 Layer locked' : '🔓 Layer unlocked');
+}
+
+function bringLayerForward(si, lid) {
+  const layers = S.slides[si].layers;
+  const idx = layers.findIndex(l => l.id === lid);
+  if (idx < layers.length - 1) {
+    [layers[idx], layers[idx+1]] = [layers[idx+1], layers[idx]];
+    openCanvas(si); renderThumbs(); save();
+  }
+}
+
+function sendLayerBack(si, lid) {
+  const layers = S.slides[si].layers;
+  const idx = layers.findIndex(l => l.id === lid);
+  if (idx > 0) {
+    [layers[idx], layers[idx-1]] = [layers[idx-1], layers[idx]];
+    openCanvas(si); renderThumbs(); save();
+  }
+}
+
+function liveUpdateOpacity(si, lid, v) {
+  const val = parseInt(v) / 100;
+  document.getElementById('opacityVal').textContent = v + '%';
+  const l = findLayer(si, lid);
+  if (!l) return;
+  l.opacity = val;
+  const el = document.getElementById('mainCanvas')?.querySelector(`[data-layer-id="${lid}"]`);
+  if (el) el.style.opacity = val;
+  clearTimeout(liveUpdateOpacity._t);
+  liveUpdateOpacity._t = setTimeout(() => { renderThumbs(); save(); }, 400);
+}
+
+function commitOpacity(si, lid, v) {
+  const l = findLayer(si, lid);
+  if (l) { l.opacity = parseInt(v) / 100; openCanvas(si); renderThumbs(); save(); }
+}
+
+function addShapeLayer(si, shape) {
+  const slide = S.slides[si];
+  const { W, H } = slideDims(false);
+  saveUndo();
+  const id = Date.now();
+  slide.layers.push({
+    id, type: 'shape', shape,
+    x: Math.round(W * 0.1), y: Math.round(H * 0.3),
+    w: Math.round(W * 0.4), h: Math.round(shape === 'circle' ? W * 0.25 : H * 0.15),
+    color: 'rgba(91,158,201,0.2)',
+    borderColor: S.accent, borderWidth: 1.5, borderRadius: 6, opacity: 1,
+  });
+  S.activeLayer = id;
+  openCanvas(si); renderThumbs(); save();
+  showToast('Shape added', 'success');
+}
+
+function updateLayerBorderColor(si, lid, v) {
+  const l = findLayer(si, lid);
+  if (l) { l.borderColor = v; openCanvas(si); renderThumbs(); save(); }
+}
+
+function setLayerRadius(si, lid, v) {
+  const l = findLayer(si, lid);
+  if (l) { l.borderRadius = parseInt(v); openCanvas(si); renderThumbs(); save(); }
+}
+
+// ── Phase 6: Text system ─────────────────────────────
+
+function setLayerAlign(si, lid, align) {
+  const l = findLayer(si, lid);
+  if (!l) return;
+  l.textAlign = align;
+  openCanvas(si); renderThumbs(); save();
+}
+
+function toggleLayerBold(si, lid) {
+  const l = findLayer(si, lid);
+  if (!l) return;
+  l.bold = !l.bold;
+  openCanvas(si); renderThumbs(); save();
+}
+
+function liveUpdateLineHeight(si, lid, v) {
+  const val = parseFloat(v);
+  document.getElementById('lhVal').textContent = val.toFixed(1) + '×';
+  const l = findLayer(si, lid);
+  if (!l) return;
+  l.lineHeight = val;
+  const canvas = document.getElementById('mainCanvas');
+  if (canvas) {
+    canvas.querySelector(`[data-layer-id="${lid}"]`)?.querySelectorAll('div').forEach(el => {
+      if (el.style.lineHeight) el.style.lineHeight = val;
+    });
+  }
+  clearTimeout(liveUpdateLineHeight._t);
+  liveUpdateLineHeight._t = setTimeout(() => { renderThumbs(); save(); }, 350);
+}
+
+function commitLineHeight(si, lid, v) {
+  const l = findLayer(si, lid);
+  if (l) { l.lineHeight = parseFloat(v); openCanvas(si); renderThumbs(); save(); }
+}
+
+function liveUpdateLetterSpacing(si, lid, v) {
+  const val = parseFloat(v);
+  document.getElementById('lsVal').textContent = val.toFixed(2);
+  const l = findLayer(si, lid);
+  if (!l) return;
+  l.letterSpacing = val;
+  const canvas = document.getElementById('mainCanvas');
+  if (canvas) {
+    canvas.querySelector(`[data-layer-id="${lid}"]`)?.querySelectorAll('div').forEach(el => {
+      el.style.letterSpacing = val + 'em';
+    });
+  }
+  clearTimeout(liveUpdateLetterSpacing._t);
+  liveUpdateLetterSpacing._t = setTimeout(() => { renderThumbs(); save(); }, 350);
+}
+
+function commitLetterSpacing(si, lid, v) {
+  const l = findLayer(si, lid);
+  if (l) { l.letterSpacing = parseFloat(v); openCanvas(si); renderThumbs(); save(); }
+}
+
 // ══════════════════════════════════════════════════════
 // UNDO
 // ══════════════════════════════════════════════════════
@@ -1270,11 +1970,11 @@ function saveUndo() {
   updateUndoBtn();
 }
 function undo() {
-  if (!S.undoStack.length) { showToast('Nothing to undo'); return; }
+  if (!S.undoStack.length) { showToast('Nothing to undo', 'warning'); return; }
   S.slides = JSON.parse(S.undoStack.pop());
   renderThumbs();
   if (S.activeSlide !== null) openCanvas(S.activeSlide);
-  save(); showToast('Undone');
+  save(); showToast('Undone', 'success');
   updateUndoBtn();
 }
 
@@ -1283,14 +1983,14 @@ function undo() {
 // ══════════════════════════════════════════════════════
 function parseCopy() {
   const raw = document.getElementById('pasteArea').value.trim();
-  if (!raw) { showToast('Paste copy first'); return; }
+  if (!raw) { showToast('Paste copy first', 'warning'); return; }
   const slides = []; let cur = null;
   for (let line of raw.split('\n')) {
     const t = line.trim();
     const m = t.match(/^\[([A-Z]+)\](.*)/);
     if (m) {
       if (cur) slides.push(cur);
-      cur = { type: m[1].toLowerCase(), text: m[2].trim(), textEN: '', accentColor: S.accent, layers: [] };
+      cur = { type: m[1].toLowerCase(), text: m[2].trim(), textEN: '', accentColor: S.accent, bgColor: '#152D47', layers: [] };
     } else if (cur) {
       if (t.startsWith('ES:')) cur.text = t.replace('ES:','').trim();
       else if (t.startsWith('EN:')) cur.textEN = t.replace('EN:','').trim();
@@ -1298,18 +1998,31 @@ function parseCopy() {
     }
   }
   if (cur) slides.push(cur);
-  if (!slides.length) { showToast('No tags found. Use [HOOK], [BODY] etc.'); return; }
-  slides.forEach(sl => autoLayout(sl));
-  S.slides = slides;
-  S.activeSlide = 0;
-  document.getElementById('emptyState').style.display = 'none';
-  showCaptionDrawer();
-  renderThumbs();
-  openCanvas(0);
-  save();
-  showToast('✓ ' + slides.length + ' slides built');
-  checkSimilarContent(slides);
-  if (window.innerWidth <= 768) closePanels();
+  if (!slides.length) { showToast('No tags found. Use [HOOK], [BODY] etc.', 'warning'); return; }
+
+  const btn = document.querySelector('.parse-btn');
+  if (btn) { btn.textContent = '⏳ Building...'; btn.disabled = true; }
+
+  if (S.slides.length) saveUndo();
+
+  setTimeout(() => {
+    slides.forEach(sl => autoLayout(sl));
+    S.slides = slides;
+    S.activeSlide = 0;
+    document.getElementById('emptyState').style.display = 'none';
+    showCaptionDrawer();
+    renderThumbs();
+    openCanvas(0);
+    save();
+    if (btn) {
+      btn.textContent = '⚡ Build Carousel'; btn.disabled = false;
+      btn.style.background = 'var(--green)'; btn.style.color = '#fff';
+      setTimeout(() => { btn.style.background = ''; btn.style.color = ''; }, 700);
+    }
+    showToast('✓ ' + slides.length + ' slides built', 'success');
+    checkSimilarContent(slides);
+    if (window.innerWidth <= 768) closePanels();
+  }, 20);
 }
 
 // ══════════════════════════════════════════════════════
@@ -1327,9 +2040,25 @@ function setLang(l, el) {
 // ══════════════════════════════════════════════════════
 // SLIDE OPERATIONS
 // ══════════════════════════════════════════════════════
-function dupSlide(i) { const copy=JSON.parse(JSON.stringify(S.slides[i])); S.slides.splice(i+1,0,copy); renderThumbs(); save(); showToast('Duplicated'); }
-function delSlide(i) { S.slides.splice(i,1); if(S.activeSlide>=S.slides.length)S.activeSlide=S.slides.length-1; renderThumbs(); if(S.activeSlide>=0)openCanvas(S.activeSlide); else document.getElementById('canvasWrap').innerHTML='<div style="color:var(--dim);font-size:12px;text-align:center;margin-top:30px">No slides</div>'; save(); showToast('Deleted'); }
-function moveSlide(i,d) { const j=i+d; if(j<0||j>=S.slides.length)return; [S.slides[i],S.slides[j]]=[S.slides[j],S.slides[i]]; renderThumbs(); save(); }
+function dupSlide(i) { saveUndo(); const copy=JSON.parse(JSON.stringify(S.slides[i])); S.slides.splice(i+1,0,copy); renderThumbs(); save(); showToast('Slide duplicated', 'success'); }
+function delSlide(i) {
+  saveUndo();
+  const thumbs = document.querySelectorAll('#thumbsGrid .slide-thumb');
+  const doDelete = () => {
+    S.slides.splice(i, 1);
+    if (S.activeSlide >= S.slides.length) S.activeSlide = S.slides.length - 1;
+    renderThumbs();
+    if (S.activeSlide >= 0) openCanvas(S.activeSlide);
+    else document.getElementById('canvasWrap').innerHTML = '<div style="color:var(--dim);font-size:12px;text-align:center;margin-top:30px">No slides</div>';
+    save();
+    showToast('Slide deleted', 'warning');
+  };
+  if (thumbs[i]) {
+    thumbs[i].style.animation = 'thumbOut .17s ease forwards';
+    setTimeout(doDelete, 160);
+  } else { doDelete(); }
+}
+function moveSlide(i,d) { const j=i+d; if(j<0||j>=S.slides.length)return; saveUndo(); [S.slides[i],S.slides[j]]=[S.slides[j],S.slides[i]]; renderThumbs(); save(); }
 
 // ══════════════════════════════════════════════════════
 // SCORING
@@ -1371,36 +2100,47 @@ function sColor(v){return v>=8?'var(--green)':v>=5?'var(--yellow)':'var(--red)';
 // EXPORT
 // ══════════════════════════════════════════════════════
 async function exportAll() {
-  if (!S.slides.length) { showToast('No slides to export'); return; }
-  showToast('Exporting...');
+  if (!S.slides.length) { showToast('No slides to export', 'warning'); return; }
+  const total = S.slides.length;
+  const fmt = document.getElementById('exportFormat')?.value || 'jpeg';
+  const pfx = document.getElementById('exportPrefix')?.value || 'rbellaquero';
+  const ext = fmt === 'png' ? 'png' : 'jpg';
+  const withWatermark = document.getElementById('exportWatermark')?.checked;
+  const uploadToDrive = document.getElementById('exportToDrive')?.checked;
   const { W: expW, H: expH } = slideDims(true);
   const { W: sW, H: sH } = slideDims(false);
   const scaleX = expW / sW, scaleY = expH / sH;
+  let errors = 0;
 
-  for (let i = 0; i < S.slides.length; i++) {
+  for (let i = 0; i < total; i++) {
+    showToast(`Exporting ${i + 1} / ${total}...`);
     const slide = S.slides[i];
-    const div = document.createElement('div');
-    div.style.cssText = `position:fixed;top:-9999px;left:-9999px;width:${expW}px;height:${expH}px;background:${slide.bgColor||'#152D47'};font-family:'Poppins',sans-serif;overflow:hidden`;
-    slide.layers.forEach(layer => div.appendChild(renderLayerEl(layer, scaleX, scaleY, true)));
-    document.body.appendChild(div);
+    const div = await buildExportDiv(slide, expW, expH, scaleX, scaleY, withWatermark);
     try {
       const canvas = await html2canvas(div, { scale:1, useCORS:true, allowTaint:true, backgroundColor:(slide.bgColor||'#152D47'), width:expW, height:expH, logging:false });
+      const filename = `${pfx}_${String(i+1).padStart(2,'0')}.${ext}`;
+      const mimeType = 'image/' + fmt;
+      const quality = fmt === 'jpeg' ? 0.95 : 1.0;
+      if (uploadToDrive && DS.token && DS.folderId) {
+        canvas.toBlob(blob => { if (blob) uploadFileToDrive(filename, blob).catch(console.error); }, mimeType, quality);
+      }
       const a = document.createElement('a');
-      const fmt = document.getElementById('exportFormat')?.value || 'jpeg';
-      const pfx = document.getElementById('exportPrefix')?.value || 'rbellaquero';
-      const ext = fmt === 'png' ? 'png' : 'jpg';
-      a.download = `${pfx}_${String(i+1).padStart(2,'0')}.${ext}`;
-      a.href = canvas.toDataURL('image/'+fmt, fmt==='jpeg'?0.95:1.0); a.click();
-      await new Promise(r => setTimeout(r, 400));
-    } catch(e) { console.error('Export error slide', i, e); }
+      a.download = filename;
+      a.href = canvas.toDataURL(mimeType, quality);
+      a.click();
+      await new Promise(r => setTimeout(r, 350));
+    } catch(e) { console.error('Export error slide', i, e); errors++; }
     document.body.removeChild(div);
   }
+
   const cap = document.getElementById('captionTa').value, ht = document.getElementById('hashtagTa').value;
-  if (cap||ht) {
-    const blob = new Blob([`CAPTION:\n${cap}\n\nFIRST COMMENT:\n${ht}`],{type:'text/plain'});
-    const a = document.createElement('a'); a.download='rbellaquero_caption.txt'; a.href=URL.createObjectURL(blob); a.click();
+  if (cap || ht) {
+    const blob = new Blob([`CAPTION:\n${cap}\n\nFIRST COMMENT:\n${ht}`], {type:'text/plain'});
+    const a = document.createElement('a'); a.download = pfx + '_caption.txt'; a.href = URL.createObjectURL(blob); a.click();
   }
-  showToast(`✓ ${S.slides.length} slides exported`);
+
+  if (errors) showToast(`⚠ ${total - errors}/${total} slides exported (${errors} failed)`, 'warning');
+  else showToast(`✓ ${total} slides exported — ${expW}×${expH}px${uploadToDrive && DS.token ? ' + Drive' : ''}`, 'success');
   saveToHistory();
 }
 
@@ -1465,38 +2205,158 @@ function saveToHistory() {
   const e={id:Date.now(),date:new Date().toLocaleDateString('es-AR'),title:S.slides[0]?.text?.split('\n')[0]?.slice(0,40)||'Untitled',slides:JSON.parse(JSON.stringify(S.slides)),format:S.format,accent:S.accent};
   S.history.unshift(e); if(S.history.length>10)S.history=S.history.slice(0,10); save();
 }
+// ══════════════════════════════════════════════════════
+// PHASE 10 — CONTENT PLANNER
+// ══════════════════════════════════════════════════════
+const CAL_SLOTS = [
+  {day:'Tuesday',  time:'19:30', label:'Clinical content — highest saves'},
+  {day:'Thursday', time:'19:30', label:'Follow-up carousel'},
+  {day:'Saturday', time:'11:00', label:'Broader reach — warm audience'},
+  {day:'Sunday',   time:'20:00', label:'Personal / identity content'},
+];
+
 function showCalendar() {
-  const times = getOptimalTimes();
-  const slots = [
-    {day:'Tuesday',time:'19:30',label:'Best for clinical content — highest saves'},
-    {day:'Thursday',time:'19:30',label:'Best for follow-up carousel'},
-    {day:'Saturday',time:'11:00',label:'Best for broader reach — warm audience'},
-    {day:'Sunday',time:'20:00',label:'Best for personal/identity content'},
-  ];
+  renderCalSchedule();
+  openModal('calModal');
+}
+
+function switchCalTab(tab) {
+  ['schedule','series','queue'].forEach(t => {
+    document.getElementById('calPane'+t.charAt(0).toUpperCase()+t.slice(1)).style.display = t===tab?'block':'none';
+    document.getElementById('calTab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('on', t===tab);
+  });
+  if (tab==='series') renderSeriesList();
+  if (tab==='queue') renderQueueList();
+}
+
+function renderCalSchedule() {
+  const cal = JSON.parse(localStorage.getItem('rbq_cal2')||'{}');
   const grid = document.getElementById('calGrid');
-  const published = JSON.parse(localStorage.getItem('rbq_cal')||'{}');
-  grid.innerHTML = slots.map((s,i) => {
-    const title = S.slides.length && S.history[i] ? S.history[i].title : (S.slides.length && i===0 ? (S.slides[0]?.text?.split('\n')[0]?.slice(0,35)||'Current carousel') : '— empty slot —');
-    const done = published[i];
-    const t = times[i]; return `<div style="background:var(--card);border:1px solid ${done?'var(--green)':i===0?'var(--accent)':'var(--border)'};border-radius:9px;padding:10px 13px;margin-bottom:8px">
-      <div style="display:flex;align-items:center;gap:10px">
-      <div style="flex:1">
-        <div style="font-size:11.5px;font-weight:600;color:${done?'var(--green)':'var(--text)'}">${s.day} ${s.time}</div>
-        <div style="font-size:11px;color:var(--sec);margin-top:2px">${title}</div>
-        <div style="font-size:10px;color:var(--dim);margin-top:2px">${s.label}</div>
+  const curTitle = S.slides.length ? (S.slides[0]?.text?.split('\n')[0]?.slice(0,40)||'Current project') : null;
+  grid.innerHTML = CAL_SLOTS.map((s,i) => {
+    const slot = cal[i] || {};
+    const done = slot.published;
+    const assigned = slot.title || '';
+    const borderColor = done ? 'var(--green)' : assigned ? 'var(--accent)' : 'var(--border)';
+    return `<div style="background:var(--card);border:1px solid ${borderColor};border-radius:9px;padding:10px 13px;margin-bottom:7px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11.5px;font-weight:600;color:${done?'var(--green)':'var(--text)'}">${s.day} · ${s.time}</div>
+          <div style="font-size:10.5px;color:var(--sec);margin-top:2px">${assigned || '<span style="color:var(--dim)">— empty —</span>'}</div>
+          <div style="font-size:9.5px;color:var(--dim);margin-top:2px">${s.label}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex-shrink:0">
+          <button onclick="toggleCalPublished(${i})" style="padding:4px 9px;border-radius:6px;border:1px solid ${done?'var(--green)':'var(--border)'};background:${done?'rgba(46,204,113,.1)':'var(--hover)'};color:${done?'var(--green)':'var(--sec)'};font-family:'Poppins',sans-serif;font-size:10px;cursor:pointer">${done?'✓ Done':'Mark done'}</button>
+          ${curTitle?`<button onclick="assignToSlot(${i})" style="padding:4px 9px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--accent);font-family:'Poppins',sans-serif;font-size:10px;cursor:pointer">Assign current</button>`:''}
+          ${assigned?`<button onclick="clearSlot(${i})" style="padding:3px 7px;border-radius:5px;border:none;background:transparent;color:var(--dim);font-family:'Poppins',sans-serif;font-size:10px;cursor:pointer">Clear</button>`:''}
+        </div>
       </div>
-      <button onclick="togglePublished(${i})" style="padding:5px 10px;border-radius:7px;border:1px solid ${done?'var(--green)':'var(--border)'};background:${done?'rgba(46,204,113,.1)':'var(--hover)'};color:${done?'var(--green)':'var(--sec)'};font-family:'Poppins',sans-serif;font-size:10.5px;cursor:pointer;flex-shrink:0">${done?'✓ Published':'Mark done'}</button>
-      </div>
-      ${t?`<div style="font-size:9.5px;color:var(--dim);margin-top:5px;padding-top:5px;border-top:1px solid var(--border)">${t.markets}</div><div style="font-size:9.5px;color:var(--accent);margin-top:2px">${t.why}</div>`:''}    </div>`;
+    </div>`;
   }).join('');
-  document.getElementById('calModal').classList.add('open');
+}
+
+function toggleCalPublished(i) {
+  const cal = JSON.parse(localStorage.getItem('rbq_cal2')||'{}');
+  if (!cal[i]) cal[i] = {};
+  cal[i].published = !cal[i].published;
+  localStorage.setItem('rbq_cal2', JSON.stringify(cal));
+  renderCalSchedule();
+}
+
+function assignToSlot(i) {
+  const title = S.slides[0]?.text?.split('\n')[0]?.slice(0,40) || DS.projectName || 'Untitled';
+  const cal = JSON.parse(localStorage.getItem('rbq_cal2')||'{}');
+  if (!cal[i]) cal[i] = {};
+  cal[i].title = title; cal[i].projectId = DS.projectId;
+  localStorage.setItem('rbq_cal2', JSON.stringify(cal));
+  renderCalSchedule();
+  showToast(`Assigned to ${CAL_SLOTS[i].day} ${CAL_SLOTS[i].time}`, 'success');
+}
+
+function clearSlot(i) {
+  const cal = JSON.parse(localStorage.getItem('rbq_cal2')||'{}');
+  delete cal[i];
+  localStorage.setItem('rbq_cal2', JSON.stringify(cal));
+  renderCalSchedule();
+}
+
+// Series tracker
+function loadSeries() {
+  try { return JSON.parse(localStorage.getItem('rbq_series')||'[]'); } catch(e) { return []; }
+}
+
+function addSeries() {
+  const name = document.getElementById('seriesNameInput')?.value.trim();
+  const total = parseInt(document.getElementById('seriesTotalInput')?.value) || 5;
+  if (!name) { showToast('Enter a series name', 'warning'); return; }
+  const series = loadSeries();
+  series.unshift({ id: Date.now(), name, total, published: 0, created: new Date().toLocaleDateString('es-AR') });
+  localStorage.setItem('rbq_series', JSON.stringify(series));
+  document.getElementById('seriesNameInput').value = '';
+  renderSeriesList();
+  showToast('Series added', 'success');
+}
+
+function incrementSeries(id, delta) {
+  const series = loadSeries();
+  const s = series.find(x => x.id === id);
+  if (!s) return;
+  s.published = Math.max(0, Math.min(s.total, s.published + delta));
+  localStorage.setItem('rbq_series', JSON.stringify(series));
+  renderSeriesList();
+}
+
+function deleteSeries(id) {
+  const series = loadSeries().filter(x => x.id !== id);
+  localStorage.setItem('rbq_series', JSON.stringify(series));
+  renderSeriesList();
+}
+
+function renderSeriesList() {
+  const el = document.getElementById('seriesList');
+  if (!el) return;
+  const series = loadSeries();
+  if (!series.length) { el.innerHTML = '<div style="color:var(--dim);font-size:11px;text-align:center;padding:20px 0">No series yet. Add your first above.</div>'; return; }
+  el.innerHTML = series.map(s => {
+    const pct = Math.round((s.published / s.total) * 100);
+    const done = s.published >= s.total;
+    const barColor = done ? 'var(--green)' : pct >= 50 ? 'var(--accent)' : 'var(--yellow)';
+    return `<div style="background:var(--card);border:1px solid ${done?'var(--green)':'var(--border)'};border-radius:9px;padding:10px 13px;margin-bottom:7px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-size:12px;font-weight:500;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(s.name)}</div>
+        <button onclick="deleteSeries(${s.id})" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:11px;padding:0 0 0 8px;flex-shrink:0">✕</button>
+      </div>
+      <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:6px">
+        <div style="height:100%;width:${pct}%;background:${barColor};border-radius:2px;transition:width .3s ease"></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:10.5px;color:${barColor};font-weight:600">${s.published} / ${s.total} published${done?' — complete ✓':''}</span>
+        <div style="display:flex;gap:5px">
+          <button onclick="incrementSeries(${s.id},-1)" style="padding:3px 8px;border-radius:5px;border:1px solid var(--border);background:var(--hover);color:var(--sec);font-family:'Poppins',sans-serif;font-size:11px;cursor:pointer">−</button>
+          <button onclick="incrementSeries(${s.id},1)" style="padding:3px 8px;border-radius:5px;border:1px solid var(--accent);background:rgba(91,158,201,.1);color:var(--accent);font-family:'Poppins',sans-serif;font-size:11px;cursor:pointer">＋</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderQueueList() {
+  const el = document.getElementById('queueList');
+  if (!el) return;
+  if (!S.history.length) { el.innerHTML = '<div style="color:var(--dim);font-size:11px;text-align:center;padding:20px 0">No saved projects in history yet.</div>'; return; }
+  el.innerHTML = S.history.slice(0,8).map(h =>
+    `<div style="background:var(--card);border:1px solid var(--border);border-radius:9px;padding:10px 13px;margin-bottom:7px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div style="min-width:0">
+        <div style="font-size:12px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(h.title)}</div>
+        <div style="font-size:10px;color:var(--dim);margin-top:2px">${h.date} · ${h.slides.length} slides</div>
+      </div>
+      <button onclick="loadHist(${h.id});closeModal('calModal')" style="padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--accent);font-family:'Poppins',sans-serif;font-size:10.5px;cursor:pointer;flex-shrink:0">Load →</button>
+    </div>`
+  ).join('');
 }
 
 function togglePublished(i) {
-  const pub = JSON.parse(localStorage.getItem('rbq_cal')||'{}');
-  pub[i] = !pub[i];
-  localStorage.setItem('rbq_cal', JSON.stringify(pub));
-  showCalendar();
+  toggleCalPublished(i);
 }
 
 function showHistory() {
@@ -1506,13 +2366,26 @@ function showHistory() {
 }
 function loadHist(id) { const e=S.history.find(h=>h.id===id); if(!e)return; if(!confirm('Load this project? Current unsaved work will be replaced.'))return; S.slides=e.slides; S.format=e.format; S.accent=e.accent; S.activeSlide=0; closeModal('histModal'); document.getElementById('emptyState').style.display='none'; showCaptionDrawer(); renderThumbs(); openCanvas(0); showToast('Project loaded'); }
 function closeModal(id){document.getElementById(id).classList.remove('open');}
+function openModal(id){document.getElementById(id).classList.add('open');}
 
 // ══════════════════════════════════════════════════════
 // NEW PROJECT
 // ══════════════════════════════════════════════════════
 function newProject() {
-  if(S.slides.length&&!confirm('Start new project? Current work saves to history.'))return;
-  if(S.slides.length)saveToHistory();
+  if (S.slides.length) {
+    const syncMsg = DS.token ? (DS.status==='saved' ? ' Current project is saved to Drive.' : ' Unsaved Drive changes will be lost.') : ' Current work saves to history.';
+    if (!confirm('Start new project?' + syncMsg)) return;
+    saveToHistory();
+  }
+  const name = prompt('Project name:', 'Untitled') || 'Untitled';
+  DS.projectName = name;
+  DS.projectId = 'proj_' + Date.now();
+  DS.projectFileId = null;
+  localStorage.setItem('rbq_project_id', DS.projectId);
+  localStorage.setItem('rbq_project_name', DS.projectName);
+  localStorage.removeItem('rbq_project_fileid');
+  const nd = document.getElementById('projectNameDisplay');
+  if (nd) nd.textContent = DS.projectName;
   S.slides=[]; S.activeSlide=null; S.activeLayer=null; S.photo=null; S.undoStack=[];
   document.getElementById('pasteArea').value=''; updatePhotoUI();
   document.getElementById('thumbsGrid').innerHTML='';
@@ -1522,14 +2395,19 @@ function newProject() {
   document.getElementById('rpanel').classList.remove('open');
   document.getElementById('canvasWrap').innerHTML='<div style="color:var(--dim);font-size:12px;text-align:center;margin-top:40px;padding:0 20px;line-height:1.7">Click any slide<br>to open the editor</div>';
   updateUndoBtn();
-  save(); showToast('New project');
+  save(); showToast('New project: ' + name);
 }
 
 // ══════════════════════════════════════════════════════
 // STORAGE
 // ══════════════════════════════════════════════════════
 function save() {
-  try { localStorage.setItem('rbq2', JSON.stringify({slides:S.slides,format:S.format,accent:S.accent,history:S.history,cap:document.getElementById('captionTa')?.value||'',ht:document.getElementById('hashtagTa')?.value||''})); } catch(e){}
+  try {
+    localStorage.setItem('rbq2', JSON.stringify({slides:S.slides,format:S.format,accent:S.accent,history:S.history,cap:document.getElementById('captionTa')?.value||'',ht:document.getElementById('hashtagTa')?.value||''}));
+    localStorage.setItem('rbq_last_local_save', Date.now().toString());
+  } catch(e){}
+  if (DS.token && DS.folderId) { scheduleDriveSync(); }
+  else { updateSyncUI('unsaved'); }
 }
 function loadFromStorage() {
   try {
@@ -3128,7 +4006,72 @@ function checkSimilarContent(newSlides) {
   }
 }
 
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+// ── TYPED TOAST ──
+// type: 'info' | 'success' | 'error' | 'warning' | 'ai'
+function showToast(msg, type='info') {
+  const t = document.getElementById('toast');
+  const icons = {success:'✓',error:'✕',warning:'⚠',ai:'✦',info:''};
+  const icon = icons[type] || '';
+  t.innerHTML = icon ? `<span class="toast-icon">${icon}</span><span>${msg}</span>` : msg;
+  t.className = `toast show${type !== 'info' ? ' t-'+type : ''}`;
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => t.classList.remove('show'), type === 'error' ? 4000 : 2800);
+}
+
+// ── SLIDE NAV (mobile arrows + swipe) ──
+function navSlide(dir) {
+  if (!S.slides.length) return;
+  const next = (S.activeSlide ?? 0) + dir;
+  if (next < 0 || next >= S.slides.length) return;
+  S.activeSlide = next;
+  renderThumbs();
+  openCanvas(next);
+  updateSlideNavBar();
+}
+
+function updateSlideNavBar() {
+  const bar = document.getElementById('slideNavBar');
+  const prev = document.getElementById('slideNavPrev');
+  const next = document.getElementById('slideNavNext');
+  const lbl  = document.getElementById('slideNavLabel');
+  if (!bar) return;
+  const has = S.slides.length > 0;
+  bar.style.display = window.innerWidth <= 768 && has ? 'flex' : 'none';
+  if (!has) return;
+  const idx = S.activeSlide ?? 0;
+  if (prev) prev.disabled = idx <= 0;
+  if (next) next.disabled = idx >= S.slides.length - 1;
+  if (lbl)  lbl.textContent = `${idx + 1} / ${S.slides.length}`;
+}
+
+// ── SWIPE BETWEEN SLIDES (mobile center panel) ──
+(function initSwipe() {
+  let tx = 0, moved = false;
+  const cpanel = () => document.getElementById('cpanel');
+
+  document.addEventListener('touchstart', e => {
+    if (window.innerWidth > 768) return;
+    if (!e.target.closest('#cpanel')) return;
+    tx = e.touches[0].clientX;
+    moved = false;
+  }, {passive: true});
+
+  document.addEventListener('touchmove', e => {
+    if (window.innerWidth > 768 || !tx) return;
+    if (!e.target.closest('#cpanel')) return;
+    if (Math.abs(e.touches[0].clientX - tx) > 8) moved = true;
+  }, {passive: true});
+
+  document.addEventListener('touchend', e => {
+    if (window.innerWidth > 768 || !tx || !moved) { tx = 0; return; }
+    if (!e.target.closest('#cpanel')) { tx = 0; return; }
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 50) {
+      navSlide(dx < 0 ? 1 : -1);
+    }
+    tx = 0; moved = false;
+  }, {passive: true});
+})();
 
 // ══════════════════════════════════════════════════════
 // LEFT PANEL TABS
@@ -3210,9 +4153,993 @@ document.addEventListener('click', e => {
   ta.selectionStart = ta.selectionEnd = pos + tag.length;
 });
 
-['captionTa','hashtagTa'].forEach(id=>document.getElementById(id)?.addEventListener('input',save));
-window.onload=()=>{loadFromStorage();if(S.slides.length){renderThumbs();openCanvas(0);}updateUndoBtn();};
-window.onresize=()=>{if(S.activeSlide!==null)openCanvas(S.activeSlide);};
+document.getElementById('captionTa')?.addEventListener('input', () => { save(); updateCaptionCounter(); });
+document.getElementById('hashtagTa')?.addEventListener('input', () => { save(); updateHashtagCounter(); });
+
+// ══════════════════════════════════════════════════════
+// GOOGLE DRIVE SYNC
+// ══════════════════════════════════════════════════════
+const DS = {
+  token: null, tokenExpiry: 0, tokenClient: null,
+  folderId: null, projectFileId: null,
+  projectId: null, projectName: 'Untitled',
+  status: 'disconnected', syncTimer: null,
+};
+
+function getDriveClientId() { return localStorage.getItem('rbq_client_id') || ''; }
+
+function onGISLoaded() { if (getDriveClientId()) initDrive(); else updateSyncUI('disconnected','Connect Drive'); }
+
+function initDrive() {
+  const cid = getDriveClientId();
+  if (!cid) { updateSyncUI('disconnected','Connect Drive'); return; }
+  if (!window.google?.accounts?.oauth2) { updateSyncUI('error','GIS unavailable'); return; }
+  DS.tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: cid,
+    scope: 'https://www.googleapis.com/auth/drive.file',
+    callback: handleDriveToken,
+    error_callback: () => updateSyncUI('error','Auth failed'),
+  });
+  const sess = tryLoadSession();
+  if (sess) {
+    DS.token=sess.token; DS.tokenExpiry=sess.expiry; DS.folderId=sess.folderId||null;
+    updateSyncUI('connected','Connected');
+    updateDriveMenuState(true);
+    driveLoadCurrentProject().catch(e=>console.error('Drive auto-load:',e));
+  } else { updateSyncUI('disconnected','Connect Drive'); }
+}
+
+function tryLoadSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem('rbq_drive_session')||'{}');
+    if (s.token && s.expiry > Date.now() + 60000) return s;
+  } catch(e){}
+  return null;
+}
+
+async function handleDriveToken(r) {
+  if (r.error) { updateSyncUI('error','Auth failed'); showToast('Drive auth failed'); return; }
+  DS.token = r.access_token;
+  DS.tokenExpiry = Date.now() + (r.expires_in * 1000);
+  updateSyncUI('syncing','Connecting...');
+  try {
+    await driveFindOrCreateFolder();
+    localStorage.setItem('rbq_drive_session', JSON.stringify({token:DS.token, expiry:DS.tokenExpiry, folderId:DS.folderId}));
+    updateSyncUI('connected','Connected');
+    showToast('✓ Connected to Google Drive', 'success');
+    updateDriveMenuState(true);
+    await driveLoadCurrentProject();
+  } catch(e) { console.error(e); updateSyncUI('error','Connection failed'); }
+}
+
+function driveConnect() {
+  const cid = getDriveClientId();
+  if (!cid) { showDriveSetupModal(); return; }
+  if (!DS.tokenClient) { initDrive(); setTimeout(()=>DS.tokenClient?.requestAccessToken({prompt:''}),500); return; }
+  DS.tokenClient.requestAccessToken({prompt: tryLoadSession() ? '' : 'consent'});
+}
+
+function driveDisconnect() {
+  if (DS.token) { try { google.accounts.oauth2.revoke(DS.token, ()=>{}); } catch(e){} }
+  DS.token=null; DS.folderId=null; DS.projectFileId=null;
+  localStorage.removeItem('rbq_drive_session');
+  updateSyncUI('disconnected','Connect Drive');
+  updateDriveMenuState(false);
+  showToast('Disconnected from Drive');
+}
+
+async function driveFindOrCreateFolder() {
+  const q = encodeURIComponent(`name='RBQ Studio' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+  const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`,{headers:{Authorization:`Bearer ${DS.token}`}});
+  if (!r.ok) throw new Error('Folder search failed');
+  const d = await r.json();
+  if (d.files?.length) { DS.folderId = d.files[0].id; return; }
+  const c = await fetch('https://www.googleapis.com/drive/v3/files',{
+    method:'POST', headers:{Authorization:`Bearer ${DS.token}`,'Content-Type':'application/json'},
+    body: JSON.stringify({name:'RBQ Studio',mimeType:'application/vnd.google-apps.folder'})
+  });
+  if (!c.ok) throw new Error('Folder create failed');
+  DS.folderId = (await c.json()).id;
+}
+
+function scheduleDriveSync() {
+  updateSyncUI('unsaved');
+  clearTimeout(DS.syncTimer);
+  DS.syncTimer = setTimeout(() => driveSaveCurrentProject(), 2000);
+}
+
+async function driveSaveNow() { clearTimeout(DS.syncTimer); await driveSaveCurrentProject(); closeDriveMenu(); }
+
+async function driveSaveCurrentProject() {
+  if (!DS.token || !DS.folderId) return;
+  if (!navigator.onLine) { updateSyncUI('offline','Offline'); return; }
+  updateSyncUI('syncing');
+  const data = {
+    id: DS.projectId, name: DS.projectName,
+    savedAt: new Date().toISOString(), version: 29,
+    slides: S.slides, format: S.format, accent: S.accent, history: S.history,
+    cap: document.getElementById('captionTa')?.value||'',
+    ht: document.getElementById('hashtagTa')?.value||'',
+  };
+  const body = JSON.stringify(data);
+  try {
+    if (DS.projectFileId) {
+      const r = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${DS.projectFileId}?uploadType=media`,{
+        method:'PATCH', headers:{Authorization:`Bearer ${DS.token}`,'Content-Type':'application/json'}, body
+      });
+      if (r.status===401) { DS.token=null; updateSyncUI('disconnected','Session expired'); return; }
+      if (!r.ok) throw new Error('Update failed '+r.status);
+    } else {
+      const meta = {name:`${DS.projectName}.json`, parents:[DS.folderId]};
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(meta)],{type:'application/json'}));
+      form.append('file', new Blob([body],{type:'application/json'}));
+      const r = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{
+        method:'POST', headers:{Authorization:`Bearer ${DS.token}`}, body:form
+      });
+      if (!r.ok) throw new Error('Create failed '+r.status);
+      DS.projectFileId = (await r.json()).id;
+      localStorage.setItem('rbq_project_fileid', DS.projectFileId);
+    }
+    updateSyncUI('connected','Saved to Drive');
+    showToast('✓ Saved to Drive');
+  } catch(e) {
+    console.error('Drive save error',e);
+    updateSyncUI('error','Save failed');
+    showToast('Drive sync failed — saved locally', 'error');
+  }
+}
+
+async function driveListProjects() {
+  if (!DS.token || !DS.folderId) return [];
+  const q = encodeURIComponent(`'${DS.folderId}' in parents and mimeType='application/json' and trashed=false`);
+  const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,modifiedTime,size)&orderBy=modifiedTime+desc`,{headers:{Authorization:`Bearer ${DS.token}`}});
+  if (!r.ok) return [];
+  return (await r.json()).files || [];
+}
+
+async function driveLoadProject(fileId) {
+  if (!DS.token) return null;
+  const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,{headers:{Authorization:`Bearer ${DS.token}`}});
+  if (!r.ok) return null;
+  return await r.json();
+}
+
+async function driveLoadCurrentProject() {
+  const fid = localStorage.getItem('rbq_project_fileid');
+  if (!fid) return;
+  DS.projectFileId = fid;
+  try {
+    const proj = await driveLoadProject(fid);
+    if (!proj) return;
+    const localTs = parseInt(localStorage.getItem('rbq_last_local_save')||'0');
+    const driveTs = new Date(proj.savedAt).getTime();
+    if (!S.slides.length || driveTs > localTs) {
+      applyProjectData(proj);
+      DS.projectName = proj.name || 'Untitled';
+      const nd = document.getElementById('projectNameDisplay');
+      if (nd) nd.textContent = DS.projectName;
+      showToast('✓ Loaded from Drive: ' + DS.projectName);
+    }
+  } catch(e) { console.error('Drive load error',e); }
+}
+
+function applyProjectData(d) {
+  S.slides=d.slides||[]; S.format=d.format||'carousel'; S.accent=d.accent||'#5B9EC9'; S.history=d.history||[];
+  if(d.cap) document.getElementById('captionTa').value=d.cap;
+  if(d.ht) document.getElementById('hashtagTa').value=d.ht;
+  if(S.slides.length){
+    document.getElementById('emptyState').style.display='none';
+    showCaptionDrawer(); renderThumbs(); openCanvas(0);
+  }
+}
+
+async function showProjectBrowser() {
+  closeDriveMenu();
+  if (!DS.token) { showToast('Connect Drive first'); return; }
+  const overlay = document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:900;display:flex;align-items:center;justify-content:center';
+  overlay.onclick=e=>{if(e.target===overlay)overlay.remove();};
+  const box = document.createElement('div');
+  box.style.cssText='background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;width:min(460px,92vw);max-height:80vh;overflow-y:auto';
+  box.innerHTML='<div style="font-size:14px;font-weight:600;margin-bottom:12px">📂 Drive Projects</div><div style="color:var(--dim);font-size:12px;padding:20px;text-align:center">Loading...</div>';
+  overlay.appendChild(box); document.body.appendChild(overlay);
+  const files = await driveListProjects();
+  if (!files.length) { box.innerHTML+='<div style="color:var(--dim);font-size:12px;margin-top:8px">No projects found in Drive.</div>'; return; }
+  const list = files.map(f=>{
+    const date = new Date(f.modifiedTime).toLocaleDateString('es-AR');
+    const kb = f.size ? Math.round(f.size/1024)+'KB' : '';
+    const cur = f.id === DS.projectFileId ? ' current' : '';
+    return `<div class="proj-card${cur}" onclick="loadDriveFile('${f.id}','${f.name.replace('.json','')}',this.closest('[style*=inset]'))">
+      <div><div style="font-size:12.5px;font-weight:500;color:var(--text)">${f.name.replace('.json','')}</div>
+      <div style="font-size:10.5px;color:var(--dim);margin-top:2px">${date}${kb?' · '+kb:''}</div></div>
+      <span style="font-size:11px;color:var(--accent)">${cur?'Current →':'Load →'}</span>
+    </div>`;
+  }).join('');
+  box.innerHTML=`<div style="font-size:14px;font-weight:600;margin-bottom:4px">📂 Drive Projects</div>
+    <div style="font-size:11px;color:var(--dim);margin-bottom:12px">${files.length} project${files.length!==1?'s':''} in RBQ Studio folder</div>
+    ${list}
+    <div style="display:flex;justify-content:flex-end;margin-top:12px">
+      <button onclick="this.closest('[style*=inset]').remove()" style="padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--sec);font-family:'Poppins',sans-serif;font-size:12px;cursor:pointer">Close</button>
+    </div>`;
+}
+
+async function loadDriveFile(fileId, name, overlay) {
+  if (!confirm(`Load "${name}"? Unsaved changes will be saved to history first.`)) return;
+  if (S.slides.length) saveToHistory();
+  showToast('Loading from Drive...');
+  const proj = await driveLoadProject(fileId);
+  if (!proj) { showToast('Failed to load project'); return; }
+  applyProjectData(proj);
+  DS.projectFileId = fileId;
+  DS.projectName = name;
+  DS.projectId = proj.id || ('proj_'+Date.now());
+  localStorage.setItem('rbq_project_fileid', fileId);
+  localStorage.setItem('rbq_project_name', name);
+  localStorage.setItem('rbq_project_id', DS.projectId);
+  const nd = document.getElementById('projectNameDisplay');
+  if (nd) nd.textContent = name;
+  updateSyncUI('connected','Saved to Drive');
+  if (overlay) overlay.remove();
+  showToast('✓ Loaded: ' + name);
+}
+
+function renameProject() {
+  const name = prompt('Rename project:', DS.projectName);
+  if (!name || name === DS.projectName) return;
+  DS.projectName = name;
+  localStorage.setItem('rbq_project_name', name);
+  const nd = document.getElementById('projectNameDisplay');
+  if (nd) nd.textContent = name;
+  if (DS.token && DS.folderId) {
+    // Also rename the Drive file
+    if (DS.projectFileId) {
+      fetch(`https://www.googleapis.com/drive/v3/files/${DS.projectFileId}`,{
+        method:'PATCH', headers:{Authorization:`Bearer ${DS.token}`,'Content-Type':'application/json'},
+        body: JSON.stringify({name: name+'.json'})
+      }).catch(e=>console.error('Rename error',e));
+    }
+    scheduleDriveSync();
+  }
+  showToast('Renamed to: ' + name);
+}
+
+function updateSyncUI(status, msg) {
+  DS.status = status;
+  const badge = document.getElementById('syncBadge');
+  const icon = document.getElementById('syncIndicator');
+  const label = document.getElementById('syncLabel');
+  if (!badge || !icon) return;
+  badge.className = 'sync-badge';
+  const map = {
+    disconnected: {cls:'',      ic:'☁',  lb: msg||'Drive'},
+    connected:    {cls:'connected', ic:'✓', lb: msg||'Drive'},
+    syncing:      {cls:'syncing',   ic:'⟳', lb:'Syncing...'},
+    unsaved:      {cls:'unsaved',   ic:'●', lb:'Unsaved'},
+    error:        {cls:'error',     ic:'!', lb: msg||'Error'},
+    offline:      {cls:'',          ic:'⚡', lb:'Offline'},
+  };
+  const s = map[status] || map.disconnected;
+  if (s.cls) badge.classList.add(s.cls);
+  icon.textContent = s.ic;
+  if (label) label.textContent = s.lb;
+}
+
+function updateDriveMenuState(connected) {
+  const c = document.getElementById('driveMenuConnected');
+  const d = document.getElementById('driveMenuDisconnected');
+  if (c) c.style.display = connected ? 'block' : 'none';
+  if (d) d.style.display = connected ? 'none' : 'block';
+}
+
+function handleSyncClick() {
+  const menu = document.getElementById('driveMenu');
+  if (!menu) return;
+  updateDriveMenuState(!!DS.token);
+  menu.classList.toggle('open');
+}
+
+function closeDriveMenu() {
+  document.getElementById('driveMenu')?.classList.remove('open');
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#driveWrap')) closeDriveMenu();
+});
+
+function showDriveSetupModal() {
+  const isFile = window.location.protocol === 'file:';
+  const hostingWarning = isFile
+    ? `<div style="background:rgba(240,192,64,.1);border:1px solid rgba(240,192,64,.3);border-radius:8px;padding:10px;font-size:11.5px;color:var(--yellow);margin-bottom:14px;line-height:1.7">
+        ⚠ <strong>Hosting required.</strong> Google OAuth doesn't work when opening an HTML file directly from your computer.<br><br>
+        Easiest fix: upload this file to <strong>GitHub Pages</strong> (free). You get a permanent HTTPS URL that works on all your devices. I can walk you through it.
+      </div>` : '';
+  const overlay = document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:900;display:flex;align-items:center;justify-content:center';
+  overlay.onclick=e=>{if(e.target===overlay)overlay.remove();};
+  overlay.innerHTML=`<div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;width:min(500px,92vw);max-height:85vh;overflow-y:auto">
+    <div style="font-size:15px;font-weight:600;margin-bottom:14px">☁ Connect Google Drive</div>
+    ${hostingWarning}
+    <div style="font-size:11.5px;color:var(--sec);margin-bottom:14px;line-height:1.8">One-time setup (~5 min). After this, all your projects sync automatically across every device.</div>
+    <div class="setup-step"><div class="setup-num">1</div><div>Go to <span style="color:var(--accent);font-weight:500">console.cloud.google.com</span> and create a new project named <em>RBQ Studio</em></div></div>
+    <div class="setup-step"><div class="setup-num">2</div><div>APIs &amp; Services → Library → search <em>Google Drive API</em> → Enable</div></div>
+    <div class="setup-step"><div class="setup-num">3</div><div>APIs &amp; Services → Credentials → <em>Create Credentials</em> → OAuth Client ID</div></div>
+    <div class="setup-step"><div class="setup-num">4</div><div>Application type: <em>Web application</em>. Add your app URL under <em>Authorized JavaScript origins</em></div></div>
+    <div class="setup-step"><div class="setup-num">5</div><div>Copy the <em>Client ID</em> that looks like: <span style="color:var(--dim);font-size:10.5px">123456-abc.apps.googleusercontent.com</span></div></div>
+    <div style="margin:14px 0 6px">
+      <div style="font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--dim);text-transform:uppercase;margin-bottom:6px">Paste your Client ID</div>
+      <input id="clientIdInput" placeholder="123456789-abc.apps.googleusercontent.com" value="${getDriveClientId()}" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Poppins',sans-serif;font-size:11.5px;padding:9px;outline:none">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button onclick="this.closest('[style*=inset]').remove()" style="padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--sec);font-family:'Poppins',sans-serif;font-size:12px;cursor:pointer">Close</button>
+      <button onclick="saveDriveClientId()" style="padding:8px 16px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;cursor:pointer">Save &amp; Connect</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+function saveDriveClientId() {
+  const input = document.getElementById('clientIdInput');
+  const id = input?.value.trim();
+  if (!id) { showToast('Paste your Client ID first'); return; }
+  localStorage.setItem('rbq_client_id', id);
+  document.querySelector('[style*="inset:0"][style*="rgba"]')?.remove();
+  showToast('Client ID saved — connecting...');
+  initDrive();
+  setTimeout(() => DS.tokenClient?.requestAccessToken({prompt:'consent'}), 400);
+}
+
+// ══════════════════════════════════════════════════════
+// PHASE 8 — CONTENT TOOLS
+// ══════════════════════════════════════════════════════
+function updateCaptionCounter() {
+  const ta = document.getElementById('captionTa');
+  const countEl = document.getElementById('captionCharCount');
+  const firstEl = document.getElementById('captionFirstLine');
+  if (!ta || !countEl) return;
+  const len = ta.value.length;
+  const pct = len / 2200;
+  const color = pct > 0.95 ? 'var(--red)' : pct > 0.8 ? 'var(--yellow)' : 'var(--sec)';
+  countEl.textContent = len + ' / 2200';
+  countEl.style.color = color;
+  const first125 = ta.value.slice(0, 125).replace(/\n/g, ' ');
+  if (firstEl) firstEl.textContent = len > 0 ? '↳ ' + first125 + (ta.value.length > 125 ? '…' : '') : 'First 125: –';
+}
+
+function updateHashtagCounter() {
+  const ta = document.getElementById('hashtagTa');
+  const el = document.getElementById('hashtagCount');
+  if (!ta || !el) return;
+  const count = (ta.value.match(/#\S+/g) || []).length;
+  el.textContent = count + ' hashtag' + (count !== 1 ? 's' : '');
+  el.style.color = count > 9 ? 'var(--yellow)' : count > 30 ? 'var(--red)' : 'var(--sec)';
+}
+
+function copyCaption() {
+  const val = document.getElementById('captionTa')?.value;
+  if (!val) { showToast('Caption is empty', 'warning'); return; }
+  navigator.clipboard.writeText(val).then(() => showToast('✓ Caption copied', 'success')).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = val; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta); showToast('✓ Caption copied', 'success');
+  });
+}
+
+function copyHashtags() {
+  const val = document.getElementById('hashtagTa')?.value;
+  if (!val) { showToast('No hashtags yet', 'warning'); return; }
+  navigator.clipboard.writeText(val).then(() => showToast('✓ Hashtags copied', 'success')).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = val; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta); showToast('✓ Hashtags copied', 'success');
+  });
+}
+
+function clearHashtags() {
+  if (!confirm('Clear all hashtags?')) return;
+  document.getElementById('hashtagTa').value = '';
+  updateHashtagCounter();
+  save();
+}
+
+// ══════════════════════════════════════════════════════
+// PHASE 7 — EXPORT ENHANCEMENTS
+// ══════════════════════════════════════════════════════
+function applyWatermark(div, expW, expH) {
+  const wm = document.createElement('div');
+  wm.style.cssText = `position:absolute;bottom:${Math.round(expH*0.012)}px;right:${Math.round(expW*0.022)}px;font-family:'Poppins',sans-serif;font-size:${Math.round(expW*0.022)}px;font-weight:600;color:rgba(255,255,255,0.45);letter-spacing:.04em;pointer-events:none`;
+  wm.textContent = '@rbellaquero';
+  div.appendChild(wm);
+}
+
+async function buildExportDiv(slide, expW, expH, scaleX, scaleY, withWatermark) {
+  const div = document.createElement('div');
+  div.style.cssText = `position:fixed;top:-9999px;left:-9999px;width:${expW}px;height:${expH}px;background:${slide.bgColor||'#152D47'};font-family:'Poppins',sans-serif;overflow:hidden`;
+  slide.layers.forEach(layer => div.appendChild(renderLayerEl(layer, scaleX, scaleY, true)));
+  if (withWatermark) applyWatermark(div, expW, expH);
+  document.body.appendChild(div);
+  return div;
+}
+
+async function copyActiveSlideToClipboard() {
+  if (S.activeSlide === null) { showToast('Open a slide first', 'warning'); return; }
+  const slide = S.slides[S.activeSlide];
+  const { W: expW, H: expH } = slideDims(true);
+  const { W: sW, H: sH } = slideDims(false);
+  const withWatermark = document.getElementById('exportWatermark')?.checked;
+  showToast('Copying to clipboard...');
+  const div = await buildExportDiv(slide, expW, expH, expW/sW, expH/sH, withWatermark);
+  try {
+    const canvas = await html2canvas(div, { scale:1, useCORS:true, allowTaint:true, backgroundColor:slide.bgColor||'#152D47', width:expW, height:expH, logging:false });
+    canvas.toBlob(async blob => {
+      try {
+        await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+        showToast('✓ Slide copied to clipboard', 'success');
+      } catch(e) {
+        showToast('Clipboard blocked — use Export instead', 'error');
+      }
+    }, 'image/png');
+  } catch(e) { showToast('Copy failed', 'error'); console.error(e); }
+  document.body.removeChild(div);
+}
+
+async function uploadFileToDrive(filename, blob) {
+  if (!DS.token || !DS.folderId) return;
+  const meta = { name: filename, parents: [DS.folderId] };
+  const form = new FormData();
+  form.append('metadata', new Blob([JSON.stringify(meta)], {type:'application/json'}));
+  form.append('file', blob);
+  await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+    method: 'POST', headers: { Authorization: `Bearer ${DS.token}` }, body: form
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// SLIDE LIBRARY
+// ══════════════════════════════════════════════════════
+const SLIDE_LIBRARY = [
+  { cat: 'Hooks & Openers', slides: [
+    { icon:'🎣', label:'Hook', desc:'Bold opening statement', type:'hook', text:'Una sola frase que lo cambia todo.\nDeslizá para ver por qué.' },
+    { icon:'📣', label:'Swipe Prompt', desc:'Invitation to keep reading', type:'hook', text:'Lo que nadie te dijo sobre esto.\nSigue leyendo.' },
+  ]},
+  { cat: 'Content', slides: [
+    { icon:'📝', label:'Body', desc:'Body text — key ideas', type:'body', text:'El cuerpo recuerda.\nCada síntoma tiene una historia.\nEl trabajo terapéutico es escucharla.' },
+    { icon:'✦', label:'Accent Quote', desc:'Single impactful quote', type:'accent', text:'El cambio no es un destino.\nEs una forma de caminar.' },
+    { icon:'🔵', label:'Highlight', desc:'Key phrase in accent color', type:'highlight', text:'Esto es lo que importa.' },
+    { icon:'—', label:'Signal List', desc:'Bulleted list of signals', type:'signals', text:'¿Cómo saberlo?\n— Te costás dormir con lo que pensás.\n— Repetís patrones que ya reconocés.\n— Sentís que algo está ahí pero no podés nombrarlo.' },
+    { icon:'🌐', label:'Bilingual', desc:'Spanish + English slide', type:'bilingual', text:'El malestar tiene nombre.\nPain has a name.', textEN:'Pain has a name.' },
+  ]},
+  { cat: 'Closers', slides: [
+    { icon:'💬', label:'CTA — DM', desc:'Call to action via DM', type:'cta', text:'Si resonó algo en vos —\nescribime por DM.\nTe respondo.\nwa.me/5491157203123' },
+    { icon:'🟢', label:'CTA — WhatsApp', desc:'Direct WhatsApp CTA', type:'cta', text:'Primera consulta sin compromiso.\nEscribime cuando estés listo.\nwa.me/5491157203123' },
+    { icon:'👤', label:'Identity / Photo', desc:'Author card with photo', type:'photo', text:'' },
+  ]},
+];
+
+function showSlideLibrary() {
+  const grid = document.getElementById('slideLibGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  SLIDE_LIBRARY.forEach(cat => {
+    const catLabel = document.createElement('div');
+    catLabel.className = 'lib-cat-label';
+    catLabel.textContent = cat.cat;
+    grid.appendChild(catLabel);
+    const catGrid = document.createElement('div');
+    catGrid.className = 'lib-grid';
+    cat.slides.forEach(s => {
+      const card = document.createElement('div');
+      card.className = 'lib-card';
+      card.innerHTML = `<div class="lib-card-icon">${s.icon}</div><div class="lib-card-label">${s.label}</div><div class="lib-card-desc">${s.desc}</div>`;
+      card.onclick = () => { insertLibrarySlide(s); closeModal('slideLibModal'); };
+      catGrid.appendChild(card);
+    });
+    grid.appendChild(catGrid);
+  });
+  openModal('slideLibModal');
+}
+
+function insertLibrarySlide(tmpl) {
+  saveUndo();
+  const newSlide = {
+    type: tmpl.type,
+    text: tmpl.text || '',
+    textEN: tmpl.textEN || '',
+    accentColor: S.accent,
+    bgColor: '#152D47',
+    layers: [],
+  };
+  autoLayout(newSlide);
+  const insertAt = S.activeSlide !== null ? S.activeSlide + 1 : S.slides.length;
+  S.slides.splice(insertAt, 0, newSlide);
+  S.activeSlide = insertAt;
+  document.getElementById('emptyState').style.display = 'none';
+  showCaptionDrawer();
+  renderThumbs();
+  openCanvas(insertAt);
+  save();
+  showToast('Slide inserted: ' + tmpl.label, 'success');
+}
+
+// ══════════════════════════════════════════════════════
+// BRAND PRESETS
+// ══════════════════════════════════════════════════════
+function loadBrandPresets() {
+  try { return JSON.parse(localStorage.getItem('rbq_brand_presets') || '[]'); } catch(e) { return []; }
+}
+function saveBrandPresets(presets) {
+  localStorage.setItem('rbq_brand_presets', JSON.stringify(presets));
+}
+
+function saveBrandPreset() {
+  const name = prompt('Preset name:', S.accent);
+  if (!name) return;
+  const presets = loadBrandPresets();
+  presets.push({ name, accent: S.accent, created: Date.now() });
+  saveBrandPresets(presets);
+  renderPresetsList();
+  showToast('Preset saved: ' + name, 'success');
+}
+
+function applyBrandPreset(idx) {
+  const presets = loadBrandPresets();
+  const p = presets[idx];
+  if (!p) return;
+  setGlobalAccent(p.accent, null);
+  // Sync swatch UI
+  document.querySelectorAll('#accentSwatches .sw').forEach(sw => sw.classList.remove('on'));
+  showToast('Preset applied: ' + p.name);
+}
+
+function deleteBrandPreset(idx, e) {
+  e.stopPropagation();
+  const presets = loadBrandPresets();
+  presets.splice(idx, 1);
+  saveBrandPresets(presets);
+  renderPresetsList();
+  showToast('Preset removed');
+}
+
+function renderPresetsList() {
+  const el = document.getElementById('presetsList');
+  if (!el) return;
+  const presets = loadBrandPresets();
+  if (!presets.length) {
+    el.innerHTML = '<span style="font-size:10px;color:var(--dim)">No presets yet.</span>';
+    return;
+  }
+  el.innerHTML = presets.map((p, i) =>
+    `<div class="preset-pill" onclick="applyBrandPreset(${i})">
+      <span class="preset-dot" style="background:${p.accent}"></span>
+      <span>${escHtml(p.name)}</span>
+      <span class="preset-del" onclick="deleteBrandPreset(${i},event)" title="Delete preset">✕</span>
+    </div>`
+  ).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// PER-SLIDE PHOTO
+// ══════════════════════════════════════════════════════
+function addPhotoToActiveSlide() {
+  if (S.activeSlide === null || !S.photo) { showToast('Upload a photo first'); return; }
+  const sl = S.slides[S.activeSlide];
+  let pl = sl.layers.find(l => l.type === 'photo');
+  if (pl) {
+    pl.photoData = S.photo;
+    pl.filter = S.photoFilter;
+  } else {
+    const { W, H } = slideDims(false);
+    const M = Math.round(W * 0.055);
+    const pw = Math.round(W * 0.44);
+    const ph = Math.round(pw * 1600/1290);
+    sl.layers.push({ id: Date.now(), type: 'photo', x: M, y: M+22, w: pw, h: ph, photoData: S.photo, filter: S.photoFilter, scaleOverride: 1 });
+  }
+  renderThumbs();
+  openCanvas(S.activeSlide);
+  save();
+  showToast('Photo added to slide ' + (S.activeSlide + 1), 'success');
+}
+
+function updatePhotoSlideContext() {
+  const ctx = document.getElementById('photoSlideContext');
+  const badge = document.getElementById('photoSlideBadge');
+  if (!ctx || !badge) return;
+  if (S.activeSlide !== null && S.slides[S.activeSlide]) {
+    ctx.style.display = 'block';
+    badge.textContent = `📷 Slide ${S.activeSlide + 1} active`;
+  } else {
+    ctx.style.display = 'none';
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// PHASE 11 — PWA
+// ══════════════════════════════════════════════════════
+(function initPWA() {
+  // Manifest via data URI (works when hosted)
+  const manifest = {
+    name: 'RBQ Studio',
+    short_name: 'RBQ',
+    description: 'Social media content creation for psychologists',
+    start_url: './',
+    display: 'standalone',
+    background_color: '#070D18',
+    theme_color: '#070D18',
+    icons: [{
+      src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" rx="32" fill="%23070D18"/><text x="96" y="128" font-size="96" text-anchor="middle" fill="%235B9EC9" font-family="sans-serif" font-weight="700">R</text></svg>',
+      sizes: '192x192', type: 'image/svg+xml'
+    }]
+  };
+  const el = document.getElementById('pwaManifest');
+  if (el) el.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifest));
+
+  // Offline banner
+  const offlineBanner = () => {
+    const b = document.getElementById('offlineBanner');
+    if (b) b.style.display = navigator.onLine ? 'none' : 'block';
+  };
+  window.addEventListener('online', () => { offlineBanner(); showToast('✓ Back online', 'success'); });
+  window.addEventListener('offline', () => { offlineBanner(); showToast('No internet — working offline', 'warning'); });
+  offlineBanner();
+
+  // Install prompt
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    window._deferredInstall = e;
+    if (!localStorage.getItem('rbq_install_dismissed')) {
+      const b = document.getElementById('installBanner');
+      if (b) b.style.display = 'flex';
+    }
+  });
+
+  window.addEventListener('appinstalled', () => {
+    dismissInstall();
+    showToast('✓ RBQ Studio installed', 'success');
+  });
+})();
+
+function installPWA() {
+  if (!window._deferredInstall) { showToast('Open in Chrome/Edge on Android to install', 'info'); return; }
+  window._deferredInstall.prompt();
+  window._deferredInstall.userChoice.then(() => { window._deferredInstall = null; dismissInstall(); });
+}
+
+function dismissInstall() {
+  const b = document.getElementById('installBanner');
+  if (b) b.style.display = 'none';
+  localStorage.setItem('rbq_install_dismissed', '1');
+}
+
+// ══════════════════════════════════════════════════════
+// PHASE 9 — AI (Claude API)
+// ══════════════════════════════════════════════════════
+function saveClaudeKey() {
+  const v = document.getElementById('claudeKeyInput').value.trim();
+  if (!v) { showToast('Enter an API key', 'error'); return; }
+  localStorage.setItem('rbq_claude_key', v);
+  const st = document.getElementById('claudeKeyStatus');
+  if (st) { st.textContent = '✓ Key saved'; st.style.color = 'var(--green)'; }
+  showToast('API key saved', 'success');
+}
+
+function getClaudeKey() { return localStorage.getItem('rbq_claude_key') || ''; }
+
+async function claudeCall(prompt, systemPrompt) {
+  const key = getClaudeKey();
+  if (!key) { showToast('Add your Claude API key in the AI tab', 'error'); return null; }
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        system: systemPrompt || 'You are a clinical psychology content assistant for Instagram.',
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      showToast('API error: ' + (err.error?.message || res.status), 'error');
+      return null;
+    }
+    const data = await res.json();
+    return data.content?.[0]?.text || '';
+  } catch(e) {
+    showToast('Network error — check your connection', 'error');
+    return null;
+  }
+}
+
+function showAiOutput(text, showLoadBtn) {
+  const out = document.getElementById('aiOutput');
+  const ta  = document.getElementById('aiOutputTa');
+  const lb  = document.getElementById('aiLoadBtn');
+  if (!out || !ta) return;
+  out.style.display = 'block';
+  ta.value = text;
+  if (lb) lb.style.display = showLoadBtn ? 'inline-flex' : 'none';
+}
+
+async function aiCopywriter() {
+  const topic = (document.getElementById('aiTopic')?.value || '').trim();
+  if (!topic) { showToast('Enter a topic first', 'error'); return; }
+  showToast('Generating copy…', 'ai');
+  const result = await claudeCall(
+    `Write carousel copy for Instagram about: "${topic}".
+Use these exact tags on their own lines: [HOOK], [BODY], [ACCENT], [SIGNALS], [CTA].
+The psychologist is Rodolfo Bella Quero, a clinical psychologist in Buenos Aires.
+Write in Spanish. Keep each section concise. For [SIGNALS] use "— " bullet points.
+For [CTA] end with a warm invitation to reach out.`,
+    'You are an expert clinical psychology content writer for Instagram carousels. Write tagged copy using the provided format tags.'
+  );
+  if (result) { showAiOutput(result, true); showToast('Copy generated', 'success'); }
+}
+
+async function aiCaption() {
+  if (!S.slides.length) { showToast('Build a carousel first', 'error'); return; }
+  const slideTexts = S.slides.map((sl, i) => `[Slide ${i+1} — ${sl.type}]\n${sl.text||''}`).join('\n\n');
+  showToast('Writing caption…', 'ai');
+  const result = await claudeCall(
+    `Write an Instagram caption for a psychology carousel with these slides:\n\n${slideTexts}\n\nThe author is Rodolfo Bella Quero (@rbellaquero), a clinical psychologist in Buenos Aires. Write in Spanish. Start with the first sentence as a hook (no hashtags). End with a brief call to action. Max 2200 characters.`,
+    'You are an expert Instagram caption writer for mental health professionals.'
+  );
+  if (result) {
+    showAiOutput(result, false);
+    const cta = document.getElementById('captionTa');
+    if (cta) { cta.value = result; updateCaptionCounter(); }
+    showCaptionDrawer();
+    showToast('Caption written', 'success');
+  }
+}
+
+async function aiHashtags() {
+  if (!S.slides.length) { showToast('Build a carousel first', 'error'); return; }
+  const text = S.slides.map(sl => sl.text||'').join(' ').slice(0, 600);
+  showToast('Suggesting hashtags…', 'ai');
+  const result = await claudeCall(
+    `Suggest 20–28 Instagram hashtags for this psychology carousel content: "${text}".
+Mix: 6 broad psychology hashtags in Spanish, 6 Argentina/Buenos Aires specific, 6 niche clinical topics, 4 bilingual English, 4–6 therapist-community tags.
+Return only hashtags separated by spaces, starting with #. No explanations.`,
+    'You are an Instagram hashtag strategist for mental health professionals.'
+  );
+  if (result) {
+    showAiOutput(result, false);
+    const hta = document.getElementById('hashtagTa');
+    if (hta) { hta.value = result; updateHashtagCounter(); }
+    showCaptionDrawer();
+    showToast('Hashtags suggested', 'success');
+  }
+}
+
+async function aiToneRewrite() {
+  if (S.activeSlide === null) { showToast('Select a slide first', 'error'); return; }
+  const sl = S.slides[S.activeSlide];
+  const text = (sl.text || '').trim();
+  if (!text) { showToast('Active slide has no text', 'error'); return; }
+  const tone = document.getElementById('aiTone')?.value || 'warm';
+  const toneMap = {
+    warm: 'warm, empathetic, and emotionally connected',
+    professional: 'professional, precise, and clinically grounded',
+    direct: 'direct, concise, and action-oriented',
+    reflective: 'reflective, introspective, and poetic'
+  };
+  showToast('Rewriting…', 'ai');
+  const result = await claudeCall(
+    `Rewrite the following Instagram slide text in a ${toneMap[tone]} tone. Keep the same meaning and structure. Preserve any tag markers like [HOOK], [BODY], etc. Write in Spanish.\n\nOriginal:\n${text}`,
+    'You are a clinical psychology content editor. Rewrite content while preserving meaning and structure.'
+  );
+  if (result) {
+    showAiOutput(result, true);
+    showToast('Rewrite ready — review then Load to Copy if it works', 'success');
+  }
+}
+
+function copyAiOutput() {
+  const ta = document.getElementById('aiOutputTa');
+  if (!ta?.value) return;
+  navigator.clipboard.writeText(ta.value).then(() => showToast('Copied to clipboard', 'success'));
+}
+
+function loadAiToCopy() {
+  const ta = document.getElementById('aiOutputTa');
+  if (!ta?.value) return;
+  document.getElementById('pasteArea').value = ta.value;
+  switchLpanelTab('copy');
+  showToast('Loaded — hit ⚡ Build Carousel');
+}
+
+// ══════════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ══════════════════════════════════════════════════════
+function isTyping() {
+  const el = document.activeElement;
+  if (!el) return false;
+  const tag = el.tagName.toLowerCase();
+  return tag === 'input' || tag === 'textarea' || el.isContentEditable;
+}
+
+document.addEventListener('keydown', e => {
+  const meta = e.ctrlKey || e.metaKey;
+
+  if (meta && e.key === 'k') { e.preventDefault(); openCmdPalette(); return; }
+  if (meta && e.key === 'z') { if (!isTyping()) { e.preventDefault(); undo(); } return; }
+  if (meta && e.key === 'e') { e.preventDefault(); exportAll(); return; }
+
+  if (isTyping()) return;
+
+  if (e.key === 'Escape') {
+    deselectLayer();
+    closeCmd();
+    document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+    return;
+  }
+  if (e.key === '?') { openModal('shortcutsModal'); return; }
+  if (e.key === 'ArrowLeft')  { navSlide(-1); return; }
+  if (e.key === 'ArrowRight') { navSlide(1);  return; }
+  if (e.key === 'd' || e.key === 'D') {
+    if (S.activeSlide !== null) { dupSlide(S.activeSlide); return; }
+  }
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    if (S.activeSlide !== null && S.slides.length > 1) { delSlide(S.activeSlide); return; }
+  }
+});
+
+function openModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add('open');
+}
+
+// ══════════════════════════════════════════════════════
+// COMMAND PALETTE
+// ══════════════════════════════════════════════════════
+const CMD_ACTIONS = [
+  { group:'Slides',  icon:'＋', label:'New project',                   fn:()=>newProject() },
+  { group:'Slides',  icon:'⚡', label:'Build carousel from copy',       fn:()=>parseCopy() },
+  { group:'Slides',  icon:'⧉', label:'Duplicate active slide',         fn:()=>{ if(S.activeSlide!==null) dupSlide(S.activeSlide); } },
+  { group:'Slides',  icon:'✕', label:'Delete active slide',            fn:()=>{ if(S.activeSlide!==null&&S.slides.length>1) delSlide(S.activeSlide); } },
+  { group:'Slides',  icon:'◀', label:'Go to first slide',              fn:()=>{ if(S.slides.length){S.activeSlide=0;renderThumbs();openCanvas(0);} } },
+  { group:'Slides',  icon:'▶', label:'Go to last slide',               fn:()=>{ if(S.slides.length){const l=S.slides.length-1;S.activeSlide=l;renderThumbs();openCanvas(l);} } },
+  { group:'Slides',  icon:'＋', label:'Insert slide from library',      fn:()=>showSlideLibrary() },
+  { group:'Export',  icon:'⬇', label:'Export all slides',              fn:()=>exportAll() },
+  { group:'Export',  icon:'📋', label:'Copy active slide to clipboard', fn:()=>copyActiveSlideToClipboard() },
+  { group:'Style',   icon:'↩', label:'Undo last change',               fn:()=>undo() },
+  { group:'Style',   icon:'🎨', label:'Open style panel',              fn:()=>switchLpanelTab('style') },
+  { group:'Style',   icon:'⧉', label:'Duplicate with next color',      fn:()=>dupCarouselColorSwap() },
+  { group:'Project', icon:'📂', label:'Saved projects',                fn:()=>showHistory() },
+  { group:'Project', icon:'📅', label:'Content planner',               fn:()=>showCalendar() },
+  { group:'Project', icon:'💡', label:'Idea bank',                     fn:()=>showIdeaBank() },
+  { group:'Project', icon:'📱', label:'Story builder',                 fn:()=>showStoryBuilder() },
+  { group:'Project', icon:'💼', label:'LinkedIn formatter',            fn:()=>showLinkedIn() },
+  { group:'Project', icon:'⌨', label:'Keyboard shortcuts',            fn:()=>openModal('shortcutsModal') },
+  { group:'AI',      icon:'✦', label:'AI: Generate carousel copy',    fn:()=>{ switchLpanelTab('ai'); setTimeout(aiCopywriter,120); } },
+  { group:'AI',      icon:'✦', label:'AI: Write Instagram caption',   fn:()=>{ switchLpanelTab('ai'); setTimeout(aiCaption,120); } },
+  { group:'AI',      icon:'✦', label:'AI: Suggest hashtags',          fn:()=>{ switchLpanelTab('ai'); setTimeout(aiHashtags,120); } },
+  { group:'AI',      icon:'✦', label:'AI: Open AI tab',               fn:()=>switchLpanelTab('ai') },
+];
+
+let _cmdIdx = 0;
+let _cmdFiltered = [...CMD_ACTIONS];
+
+function openCmdPalette() {
+  const pal = document.getElementById('cmdPalette');
+  const inp = document.getElementById('cmdInput');
+  if (!pal) return;
+  pal.style.display = 'block';
+  _cmdFiltered = [...CMD_ACTIONS];
+  _cmdIdx = 0;
+  if (inp) inp.value = '';
+  renderCmdList();
+  setTimeout(() => inp && inp.focus(), 40);
+}
+
+function closeCmdPaletteOverlay(e) {
+  if (e.target === document.getElementById('cmdPalette')) closeCmd();
+}
+
+function closeCmd() {
+  const pal = document.getElementById('cmdPalette');
+  const inp = document.getElementById('cmdInput');
+  if (pal) pal.style.display = 'none';
+  if (inp) inp.value = '';
+}
+
+function filterCmd(q) {
+  const s = q.toLowerCase().trim();
+  _cmdFiltered = s
+    ? CMD_ACTIONS.filter(a => a.label.toLowerCase().includes(s) || a.group.toLowerCase().includes(s))
+    : [...CMD_ACTIONS];
+  _cmdIdx = 0;
+  renderCmdList();
+}
+
+function renderCmdList() {
+  const list = document.getElementById('cmdList');
+  if (!list) return;
+  if (!_cmdFiltered.length) {
+    list.innerHTML = '<div style="padding:16px;text-align:center;font-size:11.5px;color:var(--dim)">No actions found</div>';
+    return;
+  }
+  let html = '';
+  let lastGroup = '';
+  _cmdFiltered.forEach((a, i) => {
+    if (a.group !== lastGroup) {
+      html += `<div style="font-size:9px;font-weight:600;letter-spacing:.12em;color:var(--dim);text-transform:uppercase;padding:8px 12px 3px">${a.group}</div>`;
+      lastGroup = a.group;
+    }
+    const active = i === _cmdIdx;
+    html += `<div data-cidx="${i}" onclick="execCmd(${i})" onmouseover="setCmdIdx(${i})"
+      style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;cursor:pointer;margin:1px 4px;background:${active?'var(--hover)':'transparent'}">
+      <span style="font-size:13px;width:18px;text-align:center;flex-shrink:0">${a.icon}</span>
+      <span style="font-size:12px;color:${active?'var(--text)':'var(--sec)'};flex:1">${a.label}</span>
+      ${active?'<span style="font-size:9px;color:var(--dim);background:var(--card);border:1px solid var(--border);border-radius:4px;padding:2px 7px">Enter</span>':''}
+    </div>`;
+  });
+  list.innerHTML = html;
+}
+
+function setCmdIdx(i) { _cmdIdx = i; renderCmdList(); }
+
+function execCmd(i) {
+  const a = _cmdFiltered[i];
+  if (!a) return;
+  closeCmd();
+  setTimeout(() => a.fn(), 60);
+}
+
+function cmdKey(e) {
+  if (e.key === 'Escape') { closeCmd(); return; }
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    _cmdIdx = Math.min(_cmdIdx + 1, _cmdFiltered.length - 1);
+    renderCmdList();
+    document.querySelector(`[data-cidx="${_cmdIdx}"]`)?.scrollIntoView({ block:'nearest' });
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    _cmdIdx = Math.max(_cmdIdx - 1, 0);
+    renderCmdList();
+    document.querySelector(`[data-cidx="${_cmdIdx}"]`)?.scrollIntoView({ block:'nearest' });
+  } else if (e.key === 'Enter') {
+    execCmd(_cmdIdx);
+  }
+}
+
+window.onload = () => {
+  // Restore project identity
+  DS.projectId   = localStorage.getItem('rbq_project_id')    || ('proj_' + Date.now());
+  DS.projectName = localStorage.getItem('rbq_project_name')  || 'Untitled';
+  DS.projectFileId = localStorage.getItem('rbq_project_fileid') || null;
+  const nd = document.getElementById('projectNameDisplay');
+  if (nd) nd.textContent = DS.projectName;
+
+  loadFromStorage();
+  if (S.slides.length) { renderThumbs(); openCanvas(0); }
+  updateUndoBtn();
+  updateSlideNavBar();
+  renderPresetsList();
+  updateCaptionCounter();
+  updateHashtagCounter();
+
+  // Init AI key status
+  const _ak = getClaudeKey();
+  const _akSt = document.getElementById('claudeKeyStatus');
+  if (_ak && _akSt) { _akSt.textContent = '✓ Key saved'; _akSt.style.color = 'var(--green)'; }
+
+  // Init Drive if GIS already loaded (sync load) or wait for async callback
+  if (window.google?.accounts?.oauth2) { initDrive(); }
+  // If Drive session exists and slides are empty, try loading from Drive after GIS loads
+  if (getDriveClientId() && tryLoadSession()) updateSyncUI('connected', 'Connected');
+  else if (!getDriveClientId()) updateSyncUI('disconnected', 'Connect Drive');
+};
+
+window.onresize = () => { if (S.activeSlide !== null) openCanvas(S.activeSlide); };
 </script>
 </body>
 </html>
